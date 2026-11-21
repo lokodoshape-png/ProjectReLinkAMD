@@ -1,24 +1,39 @@
 #version 450
-// block matching: one vector per 4x4 quarter-size texels (16x16 pixels), +-RADIUS quarter texels searched
+// block matching: one vector per 4x4 quarter-size texels (16x16 pixels), +-RADIUS quarter texels searched.
+// (relink-amd) Each 8x8 group of vectors first copies the luma it reads into shared memory: both frames' texels for the
+// group's blocks and, for the new frame, the RADIUS margin the search moves over. Each texel was fetched by every
+// candidate of up to 4 neighbouring blocks, (2 RADIUS + 1)^2 x 64 = 18 496 texture fetches a vector at the default radius;
+// now each is fetched once a group (about 60 a vector) and the search reads shared memory. The texels, the clamp at the edges,
+// the order of the sums and the costs are the ones before, so the vectors are bit for bit the same (tools/fg_bench).
 layout(local_size_x = 8, local_size_y = 8) in;
 layout(constant_id = 0) const int RADIUS = 8;
 layout(binding = 0) uniform sampler2D la;
 layout(binding = 1) uniform sampler2D lb;
 layout(binding = 2, rgba16f) uniform writeonly image2D flow;
+const int A = 36;                 // the group's block texels: 8 blocks of 4, and the 8-texel window's 2 before and 2 after
+const int B = A + 2 * RADIUS;     // and the new frame's, with the search's margin on each side
+shared float ta[A * A];
+shared float tb[B * B];
 void main() {
+    const ivec2 lm = textureSize(la, 0) - 1;
+    const ivec2 o = ivec2(gl_WorkGroupID.xy) * 32 - 2;   // the tiles' first texel (the group's first block's window)
+    const int li = int(gl_LocalInvocationIndex);
+    for (int k = li; k < A * A; k += 64) ta[k] = texelFetch(la, clamp(o + ivec2(k % A, k / A), ivec2(0), lm), 0).r;
+    for (int k = li; k < B * B; k += 64)
+        tb[k] = texelFetch(lb, clamp(o - RADIUS + ivec2(k % B, k / B), ivec2(0), lm), 0).r;
+    barrier();
     const ivec2 g = ivec2(gl_GlobalInvocationID.xy);
     if (any(greaterThanEqual(g, imageSize(flow)))) return;
-    const ivec2 lm = textureSize(la, 0) - 1;
-    const ivec2 c = g * 4 + 2;
+    const ivec2 l = ivec2(gl_LocalInvocationID.xy) * 4;   // the block's window in the tiles (texel c - 4 of before)
     float pa[64];
-    for (int i = 0; i < 64; i++) pa[i] = texelFetch(la, clamp(c + ivec2(i % 8 - 4, i / 8 - 4), ivec2(0), lm), 0).r;
+    for (int i = 0; i < 64; i++) pa[i] = ta[(l.y + i / 8) * A + l.x + i % 8];
     float best = 1e9;
     ivec2 bv = ivec2(0);
     for (int dy = -RADIUS; dy <= RADIUS; dy++)
         for (int dx = -RADIUS; dx <= RADIUS; dx++) {
             float sad = 0.0;
-            for (int i = 0; i < 64; i++)
-                sad += abs(pa[i] - texelFetch(lb, clamp(c + ivec2(i % 8 - 4 + dx, i / 8 - 4 + dy), ivec2(0), lm), 0).r);
+            const int b0 = (l.y + dy + RADIUS) * B + l.x + dx + RADIUS;
+            for (int i = 0; i < 64; i++) sad += abs(pa[i] - tb[b0 + (i / 8) * B + i % 8]);
             // (a vector must earn its length: flat haze and sky match anywhere, and any one chosen there swims)
             const float cost = sad + 0.12 * float(abs(dx) + abs(dy)) + (dx != 0 || dy != 0 ? 0.6 : 0.0);
             if (cost < best) best = cost, bv = ivec2(dx, dy);

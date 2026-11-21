@@ -25,12 +25,19 @@ vec3 filtered(vec2 uv) {
     const vec2 p = uv * size - 0.5;
     const ivec2 b = ivec2(floor(p));
     const vec2 f = p - vec2(b);
+    // (relink-amd) the kernel is separable: its 4 weights across and 4 down, once, instead of both factors again for each of
+    // the 16 taps (32 kernel evaluations, 64 sines with Lanczos, down to 8 and 16); each tap's weight is the same product
+    vec4 wx, wy;
+    for (int k = 0; k < 4; k++) {
+        const vec2 d = vec2(k - 1) - f;
+        wx[k] = pc.mode == 2 ? lanczos2(d.x) : catmull(d.x);
+        wy[k] = pc.mode == 2 ? lanczos2(d.y) : catmull(d.y);
+    }
     vec3 sum = vec3(0.0);
     float weight = 0.0;
     for (int y = -1; y <= 2; y++)
         for (int x = -1; x <= 2; x++) {
-            const vec2 d = vec2(x, y) - f;
-            const float w = pc.mode == 2 ? lanczos2(d.x) * lanczos2(d.y) : catmull(d.x) * catmull(d.y);
+            const float w = wx[x + 1] * wy[y + 1];
             sum += w * texelFetch(src, clamp(b + ivec2(x, y), ivec2(0), ivec2(size) - 1), 0).rgb;
             weight += w;
         }

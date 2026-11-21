@@ -1,12 +1,15 @@
 #version 450
 // a 3x3 median of the vectors
+// (relink-amd) by a fixed network of 19 min/max exchanges (Paeth's, as in Devillard's opt_med9) instead of a partial
+// selection sort: no data-dependent swaps on arrays indexed at run time, which kept both nine-value arrays in registers
+// moved by branches; the median it gives is the same value (tools/fg_bench).
 layout(local_size_x = 8, local_size_y = 8) in;
 layout(binding = 0) uniform sampler2D src;
 layout(binding = 1, rgba16f) uniform writeonly image2D dst;
+#define S(a, b) { const float lo = min(v[a], v[b]); v[b] = max(v[a], v[b]); v[a] = lo; }
 float med9(float v[9]) {
-    for (int i = 0; i < 5; i++)   // (the 5 smallest in order: the 5th is the median)
-        for (int j = i + 1; j < 9; j++)
-            if (v[j] < v[i]) { const float t = v[i]; v[i] = v[j]; v[j] = t; }
+    S(1, 2) S(4, 5) S(7, 8) S(0, 1) S(3, 4) S(6, 7) S(1, 2) S(4, 5) S(7, 8) S(0, 3)
+    S(5, 8) S(4, 7) S(3, 6) S(1, 4) S(2, 5) S(4, 7) S(4, 2) S(6, 4) S(4, 2)
     return v[4];
 }
 void main() {
