@@ -1020,18 +1020,30 @@ void prepare_with_screen() {
         dev.swap_resize.store((uint64_t)dev.swap_extent.width << 32 | dev.swap_extent.height, std::memory_order_release);
     }
     std::thread worker([] {
+        // (relink-amd) each phase of the start timed in the log, with the RAM free before and after it ("vk: start phase ...")
+        const auto all0 = std::chrono::steady_clock::now();
+        const auto timed = [](const char* name, const auto& fn) {
+            log_phase_ram(name);
+            const auto t0 = std::chrono::steady_clock::now();
+            fn();
+            logf("vk: start phase %s: %.1f s, %llu MB of RAM free after it", name,
+                 std::chrono::duration<double>(std::chrono::steady_clock::now() - t0).count(), (unsigned long long)ram_available_mb());
+        };
         const bool update = prepare_is_update();   // (an update, RX_VK_PREPARE_BACKGROUND=1: what the notes name now, the rest in play)
-        const bool prepared = !update && prepare_run(prep_progress, false);
+        bool prepared = false;
+        if (!update) timed("shaders (translation)", [&] { prepared = prepare_run(prep_progress, false); });
         if (prepared && !prepare_stopped()) {   // (a first start only: the pipelines the notes predict, into the driver's cache)
             prep_done.store(0), prep_total.store(0);
             prep_stage.store(1);
-            predict_run(prep_progress);
+            timed("predicted pipelines", [] { predict_run(prep_progress); });
         }
         if (!prepare_stopped()) {
             prep_done.store(0), prep_total.store(0);
             prep_stage.store(2);
-            precompile_run(prep_progress);
+            timed("pipelines before the game (driver cache warm-up, compute)", [] { precompile_run(prep_progress); });
         }
+        logf("vk: start phases: %.1f s in all%s", std::chrono::duration<double>(std::chrono::steady_clock::now() - all0).count(),
+             prepare_stopped() ? " (stopped: the window was closed)" : "");
         if (prepare_stopped()) pipeline_cache_save(true);   // (the driver's part built so far, for the next start)
         else if (update) prepare_background();
         prep_finished.store(true, std::memory_order_release);

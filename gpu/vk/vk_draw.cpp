@@ -62,6 +62,28 @@ struct PointerEntry { uint64_t addr, size; };
 const PointerEntry* pointer_table(const NvnState& s, int stage);
 uint32_t stage_cbuf_word(const NvnState& s, const Stage& st, uint32_t index, uint32_t offset);   // (vk_shader.cpp)
 uint64_t sampler_registrations_generation();   // (vk_bank.cpp: sampler_for's cache)
+/// (relink-amd) The RAM free now, in MB (0: not known)
+uint64_t ram_available_mb() {
+#ifdef _WIN32
+    MEMORYSTATUSEX ms{};
+    ms.dwLength = sizeof ms;
+    return GlobalMemoryStatusEx(&ms) ? (uint64_t)(ms.ullAvailPhys >> 20) : 0;
+#else
+    uint64_t kb = 0;
+    if (FILE* f = fopen("/proc/meminfo", "r")) {
+        char line[128];
+        while (fgets(line, sizeof line, f))
+            if (sscanf(line, "MemAvailable: %llu kB", (unsigned long long*)&kb) == 1) break;
+        fclose(f);
+    }
+    return kb >> 10;
+#endif
+}
+/// (relink-amd) The start's phases in the log with the RAM free at that moment: "vk: start phase <what>: <MB> MB of RAM free"
+void log_phase_ram(const char* what) {
+    logf("vk: start phase %s: %llu MB of RAM free, %u CPU threads", what, (unsigned long long)ram_available_mb(),
+         std::max(1u, std::thread::hardware_concurrency()));
+}
 namespace {
 // ---- (relink) this file's per-thread objects that need a constructor or a destructor ----
 // With llvm-mingw every use of such a thread_local calls the file's TLS init function, which saves registers, finds the
@@ -1268,12 +1290,26 @@ void state_record(const Program& p, const NvnState& s, const Targets& at, VkPrim
 /// RX_VK_PREPARE_THREADS=<n>, else every CPU thread but one, at most 32. They were half of them, for the PC's sake (on all of them
 /// at High the driver's compiles froze it); they run below normal, so the loading screen and the desktop still get the CPU they
 /// ask for, and the half left idle made a 4-thread PC's first start twice as long
+/// (relink-amd) How many threads the start may give to work that builds pipelines in the driver or translates programs: every CPU
+/// thread but one (as before), and no more than the free RAM holds at RX_VK_PREPARE_MB_PER_THREAD each (default 768; 0: no RAM
+/// limit, as before 0.7.9.3). A driver's compile takes hundreds of MB while it runs; on a 16 GB PC with 15 of them at once and the
+/// game's own ~10 GB the system pages to disk and every compile is many times slower. RX_VK_PREPARE_THREADS=<n> decides alone
+unsigned start_threads(const char* phase) {
+    const unsigned cpus = std::max(1u, std::thread::hardware_concurrency());
+    if (const char* e = getenv("RX_VK_PREPARE_THREADS"); e && atoi(e) > 0) return std::min((unsigned)atoi(e), 64u);
+    const unsigned by_cpu = std::clamp(cpus > 1 ? cpus - 1 : 1u, 1u, 32u);
+    static const int per = getenv("RX_VK_PREPARE_MB_PER_THREAD") ? std::max(0, atoi(getenv("RX_VK_PREPARE_MB_PER_THREAD"))) : 768;
+    const uint64_t free_mb = per ? ram_available_mb() : 0;
+    unsigned n = by_cpu;
+    if (per && free_mb) n = std::clamp((unsigned)std::min<uint64_t>(free_mb / (uint64_t)per, 64), 2u, by_cpu);
+    static std::atomic<int> told{0};
+    if (told++ < 12)
+        logf("vk: %s: %u threads (%u CPU threads, %llu MB of RAM free, %d MB a thread; RX_VK_PREPARE_THREADS, "
+             "RX_VK_PREPARE_MB_PER_THREAD=0: other)", phase, n, cpus, (unsigned long long)free_mb, per);
+    return std::max(1u, std::min(n, by_cpu));
+}
 unsigned prepare_threads() {
-    static const unsigned n = [] {
-        const unsigned cpus = std::max(1u, std::thread::hardware_concurrency());
-        if (const char* e = getenv("RX_VK_PREPARE_THREADS"); e && atoi(e) > 0) return std::min((unsigned)atoi(e), 64u);
-        return std::clamp(cpus > 1 ? cpus - 1 : 1u, 1u, 32u);
-    }();
+    static const unsigned n = start_threads("shader preparation");
     return n;
 }
 /// (prepare_run, the seed open) every pipeline of the state lists (the player's own and the shipped one): its program translated
@@ -7956,7 +7992,8 @@ size_t warm_run(void (*progress)(size_t done, size_t total), size_t after) {
     // kept the progress going, slowly, so the stall rule never fired and the warm-up spent its whole budget at a quarter speed)
     static const int pipe_s = getenv("RX_VK_WARM_PIPE_S") ? atoi(getenv("RX_VK_WARM_PIPE_S")) : 60;
     const unsigned cpus = std::max(1u, std::thread::hardware_concurrency());
-    const unsigned nthreads = std::min(cpus, 64u), slots = nthreads * 4;   // (room for the workers that replace stuck ones)
+    // (relink-amd: as many as the RAM free holds, start_threads; every CPU thread before)
+    const unsigned nthreads = std::min({cpus, 64u, start_threads("driver cache warm-up")}), slots = nthreads * 4;   // (room for the workers that replace stuck ones)
     w->current.reset(new std::atomic<int64_t>[slots]);
     w->since.reset(new std::atomic<int64_t>[slots]);
     for (unsigned k = 0; k < slots; k++) w->current[k] = -1, w->since[k] = 0;
@@ -8206,7 +8243,8 @@ void precompile_run(void (*progress)(size_t done, size_t total)) {
     };
     std::vector<std::thread> threads;
     const unsigned cpus = std::max(1u, std::thread::hardware_concurrency());
-    for (unsigned i = 0; i < std::min(cpus, 64u); i++) threads.emplace_back(worker);
+    // (relink-amd: as many as the RAM free holds, start_threads; every CPU thread before)
+    for (unsigned i = 0; i < std::min({cpus, 64u, start_threads("pipelines before the game")}); i++) threads.emplace_back(worker);
     static const int stall_s = getenv("RX_VK_PRECOMPILE_STALL_S") ? atoi(getenv("RX_VK_PRECOMPILE_STALL_S")) : 30;
     size_t last_done = 0;
     auto last_change = std::chrono::steady_clock::now();
