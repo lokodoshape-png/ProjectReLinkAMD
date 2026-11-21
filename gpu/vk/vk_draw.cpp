@@ -7886,8 +7886,17 @@ std::string warm_marker_now() {
 // (RTX 3060 Ti): from the cache, a median of 1.5 to 2.7 ms and 8.5 ms at most; compiled, a median of 63 ms (3 ms called a warm
 // cache cold once, hs2997: 5 s of warm-up for nothing). Warm, the probe costs kProbe pipelines from the cache and their programs
 // read (0.1 s). RX_VK_WARM_PROBE_MS=0: no probe (the marker alone, as before)
-bool driver_cache_lost(const std::vector<std::unique_ptr<PipeNote>>& notes) {
-    static const double limit_ms = getenv("RX_VK_WARM_PROBE_MS") ? atof(getenv("RX_VK_WARM_PROBE_MS")) : 12.0;
+//
+// (relink-amd) The 12 ms are NVIDIA's (the bench's RTX 3060 Ti). Another driver can take longer to give a pipeline from its cache
+// (AMD's reads and checks its cache file), and every start then read as "lost" and warmed again: the shader preparation on each
+// start that AMD players report (issues 151, 173). So each whole warm-up ends with the same probe, the cache warm for sure, and
+// its median goes in the marker's second line ("probe_ms"); the next starts call the cache lost over 4 times that median (12 ms
+// at the least). RX_VK_WARM_PROBE_MS set: that limit, as before. measure: only the median, no decision (median_out)
+bool driver_cache_lost(const std::vector<std::unique_ptr<PipeNote>>& notes, double learned_ms = 0, double* median_out = nullptr,
+                       bool measure = false) {
+    static const char* const probe_env = getenv("RX_VK_WARM_PROBE_MS");
+    double limit_ms = probe_env ? atof(probe_env) : 12.0;
+    if (!probe_env && learned_ms > 0) limit_ms = std::max(12.0, learned_ms * 4.0);
     if (limit_ms <= 0 || notes.empty()) return false;
     constexpr size_t kProbe = 16;
     const size_t n = notes.size(), step = std::max<size_t>(1, n / kProbe),
@@ -7918,10 +7927,17 @@ bool driver_cache_lost(const std::vector<std::unique_ptr<PipeNote>>& notes) {
     }
     std::sort(ms.begin(), ms.end());
     const double med = ms[ms.size() / 2];
+    if (median_out) *median_out = med;
+    if (measure) {
+        logf("vk: the driver's cache measured warm: %zu pipelines, median %.2f ms, longest %.2f ms (the next starts' probe: lost over "
+             "%.1f ms)", ms.size(), med, ms.back(), std::max(12.0, med * 4.0));
+        return false;
+    }
     const size_t cold = (size_t)(ms.end() - std::upper_bound(ms.begin(), ms.end(), limit_ms));
     const bool lost = cold * 4 >= ms.size();
-    logf("vk: the driver's cache probed: %zu pipelines in %.2f s, median %.2f ms, longest %.2f ms, %zu over %.1f ms: %s", ms.size(),
+    logf("vk: the driver's cache probed: %zu pipelines in %.2f s, median %.2f ms, longest %.2f ms, %zu over %.1f ms (%s): %s", ms.size(),
          std::chrono::duration<double>(std::chrono::steady_clock::now() - t0).count(), med, ms.back(), cold, limit_ms,
+         probe_env ? "RX_VK_WARM_PROBE_MS" : learned_ms > 0 ? "4x this PC's warm median" : "the default",
          lost ? "it no longer has them, warmed again" : "warm");
     return lost;
 }
@@ -7932,13 +7948,17 @@ size_t warm_run(void (*progress)(size_t done, size_t total), size_t after) {
     if (sw && !atoi(sw)) return 0;
     const std::string now = warm_marker_now(), path = warm_marker_path();
     bool marked = false;
+    double learned_ms = 0;   // (relink-amd: the marker's second line, "probe_ms <median>": driver_cache_lost)
     if (!sw) {
-        char had[MAX_PATH + 128] = "";
+        char had[MAX_PATH + 192] = "";
         if (FILE* f = fopen(path.c_str(), "rb")) {
             const size_t n = fread(had, 1, sizeof had - 1, f);
             fclose(f);
             had[n] = 0;
-            if (char* end = strpbrk(had, "\r\n")) *end = 0;
+            if (char* end = strpbrk(had, "\r\n")) {
+                *end = 0;
+                if (const char* second = strstr(end + 1, "probe_ms ")) learned_ms = atof(second + 9);
+            }
         }
         marked = now == had;
     }
@@ -7946,7 +7966,7 @@ size_t warm_run(void (*progress)(size_t done, size_t total), size_t after) {
     const std::vector<std::unique_ptr<PipeNote>> notes = pipe_notes_read();
     if (notes.empty()) return 0;   // (nothing noted yet: play notes them, and the driver's cache has them from their first draw)
     if (marked) {
-        if (!driver_cache_lost(notes)) return 0;
+        if (!driver_cache_lost(notes, learned_ms)) return 0;
         remove(path.c_str());   // (a warm-up cut short is not marked: the next start warms again without a probe)
     }
     // (the notes' programs read in one pass, as the full precompile reads them: borrowing each from the file for its pipelines,
@@ -8081,8 +8101,15 @@ size_t warm_run(void (*progress)(size_t done, size_t total), size_t after) {
              "starts leave them out%s", stuck_keys.size(), stuck_keys.size() == 1 ? "" : "s", stuck_names.c_str(),
              out_of_time ? " (the warm-up's time budget, RX_VK_WARM_S, ran out)" : stalled ? " (nothing finished for RX_VK_WARM_STALL_S)" : "");
     const bool whole = !prepare_stopped() && !out_of_time && !stalled && all_out && stuck_keys.empty();
-    if (whole)
-        if (FILE* f = fopen(path.c_str(), "wb")) fprintf(f, "%s\n", now.c_str()), fclose(f);
+    if (whole) {
+        double warm_ms = 0;   // (relink-amd: the cache's own speed when warm, for the next starts' probe)
+        driver_cache_lost(w->notes, 0, &warm_ms, true);
+        if (FILE* f = fopen(path.c_str(), "wb")) {
+            fprintf(f, "%s\n", now.c_str());
+            if (warm_ms > 0) fprintf(f, "probe_ms %.3f\n", warm_ms);
+            fclose(f);
+        }
+    }
     logf("vk: warmed the driver's cache: %zu of %zu noted pipelines made in %.1f s (%.1f s of it %zu programs read)%s",
          w->made.load(), notes.size(), std::chrono::duration<double>(std::chrono::steady_clock::now() - t0).count(), read_s,
          programs_n, whole ? "" : " (stopped before the end: the rest are made in play, and the next start goes on)");
