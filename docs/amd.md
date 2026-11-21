@@ -1,0 +1,32 @@
+# ProjectReLinkAMD: what this fork changes, and its options
+
+The fork of pixl27/ProjectReLink for AMD Radeon cards (RDNA 2 to RDNA 4). Every change can be turned back with a line in
+`relink_env.txt` beside the game, or reverted as its own commit.
+
+## Frame generation shaders (0.7.9.3)
+
+`gpu/vk/shaders/fg_flow.comp`, `fg_median.comp`, `fg_scale.comp`: the same pictures, bit for bit, for less GPU work (shared memory
+for the block search, a min/max network for the median, separable filter weights). `tools/fg_bench` checks and times them.
+
+## The start's shader preparation (0.7.9.3)
+
+| Option | Default | What it does |
+|---|---|---|
+| `RX_VK_PREPARE_MB_PER_THREAD` | `768` | The start's workers (shader translation, the driver cache warm-up, the pipelines made before the game) are as many as the free RAM holds at this many MB each, from 2 up to every CPU thread but one. `0`: every CPU thread but one, whatever the RAM (as upstream). |
+| `RX_VK_PREPARE_THREADS` | unset | That many workers, whatever the RAM (as upstream). |
+| `RX_VK_WARM_PROBE_MS` | unset | The probe that decides whether the driver's cache lost the pipelines calls a pipeline cold over this many ms (upstream: always 12, measured on NVIDIA). Unset: 4 times the median measured on this PC right after its last whole warm-up (kept in `relink_pipelines_warm.txt`, second line `probe_ms`), and 12 when none was measured yet. `0`: no probe. |
+
+The log says what each start did:
+
+- `vk: start phase <name>: <MB> MB of RAM free` before each phase and `vk: start phase <name>: <s> s, <MB> MB of RAM free after it`
+  after it, then `vk: start phases: <s> s in all`.
+- `vk: <phase>: <n> threads (<cpus> CPU threads, <MB> MB of RAM free, <MB> MB a thread ...)`.
+- `vk: the driver's cache measured warm: ... median <ms>` at the end of a whole warm-up, and `vk: the driver's cache probed: ...
+  (<which limit>): warm` or `... warmed again` at the starts after it.
+- `vk: AMD: drawing stages ..., mesh/task pipelines ..., fast sync ..., RAM ... MB free at the start`: one line, on AMD GPUs only.
+
+To go back to upstream's start entirely: `RX_VK_PREPARE_MB_PER_THREAD=0` and `RX_VK_WARM_PROBE_MS=12`.
+
+## What to report
+
+`relink_log.txt` from the game folder, with the card, the driver version and the `relink_env.txt` used.
