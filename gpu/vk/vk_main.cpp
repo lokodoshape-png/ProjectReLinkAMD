@@ -1343,6 +1343,13 @@ const MkwVkRenderer* mkwvk_init(const MkwVkHost* h) {
          dev.props.deviceName, VK_VERSION_MAJOR(dev.props.apiVersion), VK_VERSION_MINOR(dev.props.apiVersion),
          dev.props.driverVersion, dev.mesh_shader ? "yes" : "no", dev.external_memory_host ? "yes" : "no",
          dev.graphics_pipeline_library ? "yes" : "no");
+    if (dev.props.vendorID == 0x1002) {   // (relink-amd) what this start does differently on an AMD GPU, in one line, for reports
+        const VkShaderStageFlags drawing = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+        logf("vk: AMD: drawing stages %s, mesh/task pipelines %s, fast sync %s, RAM %llu MB free at the start",
+             (dev.sg32_stages & drawing) == drawing ? "held to 32 lanes" : dev.big_warp ? "may run 64 wide (translated for it)" : "not held",
+             getenv("RX_VK_MESH_OPT") ? "with the driver's optimizer (RX_VK_MESH_OPT)" : "without the driver's optimizer",
+             fast_sync_all() ? "on (RX_VK_FAST_SYNC=0: off)" : "off", (unsigned long long)ram_available_mb());
+    }
     if (!dev.mesh_shader && !dev.mesh_fallback && !getenv("RX_VK_NO_MESH_WARNING")) {
         // (the game draws its foliage, grass and many effects with mesh shaders: without them those draws are left out and the
         // picture is broken (an RX 580's "static"-like scenes, 2026-11-08). Said once, on its own thread, and the game goes on.)
