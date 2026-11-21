@@ -24,7 +24,7 @@ static class Texts
     public static string L(string fr, string en) => French ? fr : en;
 
     public const string Name = "Project ReLink";
-    public const string Repo = "pixl27/ProjectReLink";
+    public const string Repo = "lokodoshape-png/ProjectReLinkAMD";
     public const string RepoPage = "https://github.com/" + Repo;
     public const string ReleasesPage = RepoPage + "/releases/latest";
     public const string HelpPage = RepoPage + "#readme";

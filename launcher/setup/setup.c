@@ -432,8 +432,8 @@ static const char *manifest_url(void) {
     char tag[128];
     wanted_tag(tag, sizeof tag);
     if (e && *e) snprintf(u, sizeof u, "%s", e);
-    else if (tag[0]) snprintf(u, sizeof u, "https://github.com/pixl27/ProjectReLink/releases/download/%s/relink-setup.txt", tag);
-    else snprintf(u, sizeof u, "%s", "https://github.com/pixl27/ProjectReLink/releases/latest/download/relink-setup.txt");
+    else if (tag[0]) snprintf(u, sizeof u, "https://github.com/lokodoshape-png/ProjectReLinkAMD/releases/download/%s/relink-setup.txt", tag);
+    else snprintf(u, sizeof u, "%s", "https://github.com/lokodoshape-png/ProjectReLinkAMD/releases/latest/download/relink-setup.txt");
     return u;
 }
 
@@ -490,7 +490,7 @@ static DWORD WINAPI work(LPVOID unused) {
     if (!ok)
         fail(g_http_status == 404
                  ? L"ReLink has no release to install from yet. Its releases page says when one is out: "
-                   L"https://github.com/pixl27/ProjectReLink/releases"
+                   L"https://github.com/lokodoshape-png/ProjectReLinkAMD/releases"
              : g_http_status ? L"GitHub's download servers are failing right now (an error 500 or above, tried 8 times over 3 minutes). "
                                L"This is on GitHub's side: try again in a few minutes, or later today."
                              : L"Could not reach GitHub to get ReLink. Check your internet connection and try again.");

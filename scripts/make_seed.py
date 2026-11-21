@@ -83,7 +83,7 @@ def main():
     p.add_argument("--python", required=True)
     p.add_argument("--cpm", required=True)
     p.add_argument("--work", required=True)
-    p.add_argument("--base", default="https://github.com/pixl27/ProjectReLink/releases/download/builder-parts")
+    p.add_argument("--base", default="https://github.com/lokodoshape-png/ProjectReLinkAMD/releases/download/builder-parts")
     a = p.parse_args()
     if not os.path.isfile(os.path.join(a.python, "python.exe")):
         sys.exit("%s: no python.exe" % a.python)

@@ -2,7 +2,7 @@
   "$schema": "https://recomplauncher.com/schema/recomplauncher.json",
   "format": 1,
   "name": "Project ReLink",
-  "repo": "pixl27/ProjectReLink",
+  "repo": "lokodoshape-png/ProjectReLinkAMD",
   "game": {
     "kind": "iso_or_folder",
     "label": "Your copy of The Legend of Zelda: Ocarina of Time for Nintendo Switch 2, with its update installed (program 0400486024DEC000, update v131072, build e0f3ccfa): its .nup file, or a folder holding its exefs and romfs folders. Other versions do not work.",
