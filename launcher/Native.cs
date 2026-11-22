@@ -65,16 +65,16 @@ static class Native
     public static bool SetRefresh(int hz, bool test, out string why)
     {
         var (w, h, cur) = CurrentMode();
-        if (w == 0) { why = L("mode actuel inconnu", "current mode unknown"); return false; }
-        if (cur == hz) { why = L($"déjà à {hz} Hz", $"already at {hz} Hz"); return true; }
-        if (!RatesAt(w, h).Contains(hz)) { why = L($"l'écran ne propose pas {hz} Hz en {w}×{h}", $"the display has no {hz} Hz mode at {w}×{h}"); return false; }
+        if (w == 0) { why = L("mode actuel inconnu", "current mode unknown", "modo atual desconhecido"); return false; }
+        if (cur == hz) { why = L($"déjà à {hz} Hz", $"already at {hz} Hz", $"já está a {hz} Hz"); return true; }
+        if (!RatesAt(w, h).Contains(hz)) { why = L($"l'écran ne propose pas {hz} Hz en {w}×{h}", $"the display has no {hz} Hz mode at {w}×{h}", $"a tela não tem modo de {hz} Hz em {w}×{h}"); return false; }
         var dm = NewMode();
         dm.dmPelsWidth = w;
         dm.dmPelsHeight = h;
         dm.dmDisplayFrequency = hz;
         dm.dmFields = DM_PELSWIDTH | DM_PELSHEIGHT | DM_DISPLAYFREQUENCY;
         int r = ChangeDisplaySettingsExW(null, ref dm, IntPtr.Zero, test ? CDS_TEST : CDS_FULLSCREEN, IntPtr.Zero);
-        if (r != 0) { why = L($"Windows refuse le changement (code {r})", $"Windows refused the change (code {r})"); return false; }
+        if (r != 0) { why = L($"Windows refuse le changement (code {r})", $"Windows refused the change (code {r})", $"O Windows recusou a mudança (código {r})"); return false; }
         if (!test) changed = true;
         why = $"{w}×{h}, {hz} Hz";
         return true;

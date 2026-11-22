@@ -54,12 +54,12 @@ public partial class MainWindow
         {
             romfs = c.Romfs;
             exefs = c.Exefs;
-            foldersNote = L($"Dossiers utilisés : {romfs} et {exefs} (comme la dernière fois)", $"Using the folders {romfs} and {exefs} (as last time)");
+            foldersNote = L($"Dossiers utilisés : {romfs} et {exefs} (comme la dernière fois)", $"Using the folders {romfs} and {exefs} (as last time)", $"Usando as pastas {romfs} e {exefs} (como da última vez)");
         }
         else if (c.Nup != null && File.Exists(c.Nup))
         {
             var info = new FileInfo(c.Nup);
-            dumps.Insert(0, new Dump(info.FullName, L("La dernière fois", "Last time"), info.Length, info.LastWriteTime));
+            dumps.Insert(0, new Dump(info.FullName, L("La dernière fois", "Last time", "Última vez"), info.Length, info.LastWriteTime));
             chosenNup = c.Nup;
         }
     }
@@ -85,7 +85,7 @@ public partial class MainWindow
         var tools = Tools.Find();
         ToolsNote.Visibility = tools == null ? Visibility.Visible : Visibility.Collapsed;
         ToolsNote.Text = L("Les outils de ReLink manquent dans son dossier. Lancez de nouveau ReLink-Setup.exe : il les télécharge et les vérifie.",
-                           "ReLink's build tools are missing from its folder. Run ReLink-Setup.exe again: it downloads and checks them.");
+                           "ReLink's build tools are missing from its folder. Run ReLink-Setup.exe again: it downloads and checks them.", "As ferramentas de compilação do ReLink estão faltando na pasta dele. Rode o ReLink-Setup.exe de novo: ele baixa e verifica tudo.");
         FillDumps();
         Refresh();
     }
@@ -94,9 +94,9 @@ public partial class MainWindow
     {
         var steps = new List<(string, string)>
         {
-            ("read", L("Lecture", "Read")), ("lift", L("Traduction", "Translate")), ("compile", L("Compilation", "Compile")), ("finish", L("Assemblage", "Assemble")),
+            ("read", L("Lecture", "Read", "Ler")), ("lift", L("Traduction", "Translate", "Traduzir")), ("compile", L("Compilation", "Compile", "Compilar")), ("finish", L("Assemblage", "Assemble", "Montar")),
         };
-        if (update) steps.Insert(0, ("download", L("Réception", "Download")));
+        if (update) steps.Insert(0, ("download", L("Réception", "Download", "Baixar")));
         staff.Set(steps.ToArray());
     }
 
@@ -111,7 +111,7 @@ public partial class MainWindow
                 DumpList.Children.Add(new TextBlock
                 {
                     Text = L("Aucun fichier .nup trouvé dans Téléchargements, Bureau ou Documents. Choisissez le vôtre ci-dessous, ou déposez-le sur cette fenêtre.",
-                             "No .nup file found in Downloads, Desktop or Documents. Choose yours below, or drop it on this window."),
+                             "No .nup file found in Downloads, Desktop or Documents. Choose yours below, or drop it on this window.", "Nenhum arquivo .nup encontrado em Downloads, Área de Trabalho ou Documentos. Escolha o seu abaixo, ou solte-o nesta janela."),
                     Style = St("Body"), Margin = new Thickness(0, 4, 0, 4),
                 });
             return;
@@ -119,10 +119,10 @@ public partial class MainWindow
         foreach (var d in dumps)
         {
             checks.TryGetValue(d.Path, out var c);
-            var (state, brush) = !checks.ContainsKey(d.Path) || c == null ? (L("Vérification…", "Checking…"), "BoneFaint")
-                : c.Value.Ok ? (L("Bonne version", "Supported version"), "Tunic")
-                : c.Value.Text.StartsWith("This is build") ? (L("Autre version du jeu", "Not the supported version"), "Warn")
-                : (L("Illisible", "Can't be read"), "Warn");
+            var (state, brush) = !checks.ContainsKey(d.Path) || c == null ? (L("Vérification…", "Checking…", "Verificando…"), "BoneFaint")
+                : c.Value.Ok ? (L("Bonne version", "Supported version", "Versão suportada"), "Tunic")
+                : c.Value.Text.StartsWith("This is build") ? (L("Autre version du jeu", "Not the supported version", "Não é a versão suportada"), "Warn")
+                : (L("Illisible", "Can't be read", "Não dá para ler"), "Warn");
             var name = new TextBlock { Text = Path.GetFileName(d.Path), FontSize = 15, TextTrimming = TextTrimming.CharacterEllipsis };
             var meta = new TextBlock { Text = $"{d.Where}, {Bytes(d.Size)}, {Finder.Ago(d.Modified)}", FontSize = 12.5, Foreground = Res("BoneFaint"), Margin = new Thickness(0, 2, 0, 0) };
             var texts = new StackPanel { Children = { name, meta } };
@@ -149,7 +149,7 @@ public partial class MainWindow
     {
         var m = Regex.Match(text, @"^This is build (\w+)\. \w+ supports build (\w+)\.");
         return m.Success ? L($"C'est la version {m.Groups[1].Value} du jeu ; ReLink prend en charge la version {m.Groups[2].Value}.",
-                             $"This is build {m.Groups[1].Value} of the game; ReLink supports build {m.Groups[2].Value}.") : text;
+                             $"This is build {m.Groups[1].Value} of the game; ReLink supports build {m.Groups[2].Value}.", $"Esta é a build {m.Groups[1].Value} do jogo; o ReLink suporta a build {m.Groups[2].Value}.") : text;
     }
 
     /// Each found file's version, one at a time (the check unpacks into one probe folder); the first good one is chosen
@@ -213,8 +213,8 @@ public partial class MainWindow
         string disk;
         try { disk = (Path.GetPathRoot(Path.GetFullPath(outPath)) ?? "").TrimEnd('\\'); } catch (Exception) { disk = ""; }
         var gb = Storage.NeededBytes >> 30;
-        SpaceText.Text = free < 0 ? L($"Il faut {gb} Go libres pendant l'installation.", $"The install needs {gb} GB free while it works.")
-            : L($"Il faut {gb} Go libres pendant l'installation ; {disk} en a {free >> 30}.", $"The install needs {gb} GB free while it works; {disk} has {free >> 30}.");
+        SpaceText.Text = free < 0 ? L($"Il faut {gb} Go libres pendant l'installation.", $"The install needs {gb} GB free while it works.", $"A instalação precisa de {gb} GB livres enquanto trabalha.")
+            : L($"Il faut {gb} Go libres pendant l'installation ; {disk} en a {free >> 30}.", $"The install needs {gb} GB free while it works; {disk} has {free >> 30}.", $"A instalação precisa de {gb} GB livres enquanto trabalha; {disk} tem {free >> 30}.");
         SpaceText.Foreground = Res(free >= 0 && free < Storage.NeededBytes ? "Warn" : "BoneFaint");
         RefreshMode();
     }
@@ -226,18 +226,18 @@ public partial class MainWindow
         launcherIsOld = latestTag != null && mine != null && mine != latestTag;
         if (launcherIsOld)
         {
-            MainButtonText.Text = L("Mettre ReLink à jour", "Update ReLink");
+            MainButtonText.Text = L("Mettre ReLink à jour", "Update ReLink", "Atualizar o ReLink");
             MainButton.IsEnabled = true;
-            Card(L("Installation", "Install"), L($"{latestTag} dispo", $"{latestTag} out"), Pill.Gold);
-            MainNote.Text = L("Mettez ReLink à jour avant d'installer.", "Update ReLink before installing.");
+            Card(L("Installation", "Install", "Instalar"), L($"{latestTag} dispo", $"{latestTag} out", $"{latestTag} disponível"), Pill.Gold);
+            MainNote.Text = L("Mettez ReLink à jour avant d'installer.", "Update ReLink before installing.", "Atualize o ReLink antes de instalar.");
             return;
         }
-        Card(L("Installation", "Install"));
-        MainButtonText.Text = Game.Installed(outPath) ? L("Réinstaller", "Install again") : L("Installer", "Install");
+        Card(L("Installation", "Install", "Instalar"));
+        MainButtonText.Text = Game.Installed(outPath) ? L("Réinstaller", "Install again", "Instalar de novo") : L("Installer", "Install", "Instalar");
         MainButton.IsEnabled = SourceReady && outPath.Length > 2 && Tools.Find() != null;
-        MainNote.Text = Tools.Find() == null ? L("Les outils de ReLink manquent.", "ReLink's build tools are missing.")
-            : SourceReady ? L("Tout est prêt.", "Everything is ready.")
-            : L("Choisissez votre copie du jeu.", "Choose your copy of the game.");
+        MainNote.Text = Tools.Find() == null ? L("Les outils de ReLink manquent.", "ReLink's build tools are missing.", "As ferramentas de compilação do ReLink estão faltando.")
+            : SourceReady ? L("Tout est prêt.", "Everything is ready.", "Tudo pronto.")
+            : L("Choisissez votre copie du jeu.", "Choose your copy of the game.", "Escolha a sua cópia do jogo.");
     }
 
     void Dropped(object sender, DragEventArgs e)
@@ -246,7 +246,7 @@ public partial class MainWindow
         if (view != View.Install) ShowInstall();
         foreach (var p in paths)
         {
-            if (p.EndsWith(".nup", StringComparison.OrdinalIgnoreCase) && File.Exists(p)) AddDump(p, L("Déposé", "Dropped"));
+            if (p.EndsWith(".nup", StringComparison.OrdinalIgnoreCase) && File.Exists(p)) AddDump(p, L("Déposé", "Dropped", "Solto"));
             else if (Directory.Exists(Path.Combine(p, "romfs")) && Directory.Exists(Path.Combine(p, "exefs")))
                 UseFolders(Path.Combine(p, "romfs"), Path.Combine(p, "exefs"));
         }
@@ -254,21 +254,21 @@ public partial class MainWindow
 
     void BrowseNup(object sender, RoutedEventArgs e)
     {
-        var d = new OpenFileDialog { Filter = L("Copie du jeu (*.nup)|*.nup", "Game file (*.nup)|*.nup"), Title = L("Choisir votre copie du jeu", "Choose your game file") };
-        if (d.ShowDialog(this) == true) AddDump(d.FileName, L("Choisi", "Chosen"));
+        var d = new OpenFileDialog { Filter = L("Copie du jeu (*.nup)|*.nup", "Game file (*.nup)|*.nup", "Arquivo do jogo (*.nup)|*.nup"), Title = L("Choisir votre copie du jeu", "Choose your game file", "Escolha o arquivo do seu jogo") };
+        if (d.ShowDialog(this) == true) AddDump(d.FileName, L("Choisi", "Chosen", "Escolhido"));
     }
 
     /// The other way in: an unpacked game, its romfs and exefs folders (or one folder holding both)
     void BrowseFolders(object sender, RoutedEventArgs e)
     {
-        var both = PickFolder(L("Choisir le dossier qui contient romfs et exefs (ou le dossier romfs)", "Choose the folder with romfs and exefs (or the romfs folder)"));
+        var both = PickFolder(L("Choisir le dossier qui contient romfs et exefs (ou le dossier romfs)", "Choose the folder with romfs and exefs (or the romfs folder)", "Escolha a pasta com romfs e exefs (ou a pasta romfs)"));
         if (both == null) return;
         if (Directory.Exists(Path.Combine(both, "romfs")) && Directory.Exists(Path.Combine(both, "exefs")))
         {
             UseFolders(Path.Combine(both, "romfs"), Path.Combine(both, "exefs"));
             return;
         }
-        var ex = PickFolder(L("Choisir maintenant le dossier exefs", "Now choose the exefs folder"));
+        var ex = PickFolder(L("Choisir maintenant le dossier exefs", "Now choose the exefs folder", "Agora escolha a pasta exefs"));
         if (ex != null) UseFolders(both, ex);
     }
 
@@ -276,7 +276,7 @@ public partial class MainWindow
     {
         if (!File.Exists(Path.Combine(x, "main")))
         {
-            MessageBox.Show(this, L("Ce dossier exefs ne contient pas de fichier nommé main.", "That exefs folder has no file named main."), Texts.Name);
+            MessageBox.Show(this, L("Ce dossier exefs ne contient pas de fichier nommé main.", "That exefs folder has no file named main.", "Essa pasta exefs não tem um arquivo chamado main."), Texts.Name);
             return;
         }
         if (RomfsProblem(r) is { } why)
@@ -287,7 +287,7 @@ public partial class MainWindow
         romfs = r;
         exefs = x;
         chosenNup = null;
-        foldersNote = L($"Dossiers utilisés : {r} et {x}", $"Using the folders {r} and {x}");
+        foldersNote = L($"Dossiers utilisés : {r} et {x}", $"Using the folders {r} and {x}", $"Usando as pastas {r} e {x}");
         FillDumps();
         Refresh();
     }
@@ -305,13 +305,16 @@ public partial class MainWindow
             return L($"Ce dossier romfs vient d'une autre version du jeu ({other}). ReLink a besoin de la version dont le romfs contient " +
                      $"System\\Resource\\{RomfsTable} : faites une copie (dump) du jeu avec sa mise à jour, et prenez le romfs et l'exefs de cette même copie.",
                      $"This romfs folder is from another version of the game ({other}). ReLink needs the version whose romfs has " +
-                     $"System\\Resource\\{RomfsTable}: dump the game with its update applied, and use the romfs and exefs of that same dump.");
+                     $"System\\Resource\\{RomfsTable}: dump the game with its update applied, and use the romfs and exefs of that same dump.", $"Esta pasta romfs é de outra versão do jogo ({other}). O ReLink precisa da versão cuja romfs tem " +
+                     $"System\\Resource\\{RomfsTable}: faça o dump do jogo com a atualização aplicada, e use a romfs e a exefs desse mesmo dump.");
         return L("Ce dossier romfs n'est pas le RomFS du jeu : il n'a pas de fichier System\\Resource\\ResourceSizeTable. Les dossiers pris " +
                  "dans un autre portage PC ou un autre outil gardent le jeu dans leur propre format et ne marchent pas ici. Utilisez votre " +
                  "propre copie du jeu : le fichier .nup, ou les dossiers romfs et exefs extraits de lui.",
                  "This romfs folder is not the game's own RomFS: it has no System\\Resource\\ResourceSizeTable file. Folders taken from " +
                  "another PC port or tool hold the game in their own format and do not work here. Use your own dump of the game: the " +
-                 ".nup file, or the romfs and exefs folders dumped from it.");
+                 ".nup file, or the romfs and exefs folders dumped from it.", "Esta pasta romfs não é a RomFS do próprio jogo: ela não tem o arquivo System\\Resource\\ResourceSizeTable. Pastas tiradas de " +
+                 "outro port para PC ou ferramenta guardam o jogo no formato delas e não funcionam aqui. Use o seu próprio dump do jogo: o " +
+                 "arquivo .nup, ou as pastas romfs e exefs extraídas dele.");
     }
 
     static string? PickFolder(string title)
@@ -322,7 +325,7 @@ public partial class MainWindow
 
     void BrowseOut(object sender, RoutedEventArgs e)
     {
-        outPath = PickFolder(L("Choisir où installer le jeu", "Choose where the game goes")) ?? outPath;
+        outPath = PickFolder(L("Choisir où installer le jeu", "Choose where the game goes", "Escolha onde o jogo vai ficar")) ?? outPath;
         Refresh();
     }
 
@@ -334,12 +337,12 @@ public partial class MainWindow
         if (launcherIsOld)
         {
             MainButton.IsEnabled = false;
-            MainButtonText.Text = L("Téléchargement…", "Downloading…");
+            MainButtonText.Text = L("Téléchargement…", "Downloading…", "Baixando…");
             try { await Updater.RunLatestSetup(this, Array.Empty<string>()); }
             catch (Exception ex)
             {
                 MessageBox.Show(this, ex.Message + L(" Vous pouvez aussi télécharger ReLink-Setup.exe depuis la page des versions.",
-                                                     " You can also download ReLink-Setup.exe from the releases page."), Texts.Name);
+                                                     " You can also download ReLink-Setup.exe from the releases page.", " Você também pode baixar o ReLink-Setup.exe na página de releases."), Texts.Name);
                 RefreshMode();
             }
             return;
@@ -347,7 +350,7 @@ public partial class MainWindow
         var tools = Tools.Find();
         if (tools == null)
         {
-            ShowProblem(L("Les outils de ReLink ne sont pas dans son dossier.", "The build tools are not in ReLink's folder."), tools: true);
+            ShowProblem(L("Les outils de ReLink ne sont pas dans son dossier.", "The build tools are not in ReLink's folder.", "As ferramentas de compilação não estão na pasta do ReLink."), tools: true);
             return;
         }
         var args = new List<string>();
@@ -360,11 +363,11 @@ public partial class MainWindow
 
     static (string Id, string Build, string Update)[] Stages => new[]
     {
-        ("download", "", L("Recevoir la mise à jour", "Download the update")),
-        ("read", L("Lire votre copie du jeu", "Read your game files"), L("Lire les fichiers du jeu gardés dans le dossier", "Read the game files kept in the folder")),
-        ("lift", L("Traduire le jeu en code PC", "Translate the game to PC code"), L("Traduire le jeu en code PC", "Translate the game to PC code")),
-        ("compile", L("Compiler", "Compile"), L("Compiler ce qui a changé", "Compile what changed")),
-        ("finish", L("Assembler le jeu", "Put the game together"), L("Mettre le nouveau jeu en place", "Swap in the new game")),
+        ("download", "", L("Recevoir la mise à jour", "Download the update", "Baixar a atualização")),
+        ("read", L("Lire votre copie du jeu", "Read your game files", "Ler os arquivos do seu jogo"), L("Lire les fichiers du jeu gardés dans le dossier", "Read the game files kept in the folder", "Ler os arquivos do jogo guardados na pasta")),
+        ("lift", L("Traduire le jeu en code PC", "Translate the game to PC code", "Traduzir o jogo para código de PC"), L("Traduire le jeu en code PC", "Translate the game to PC code", "Traduzir o jogo para código de PC")),
+        ("compile", L("Compiler", "Compile", "Compilar"), L("Compiler ce qui a changé", "Compile what changed", "Compilar o que mudou")),
+        ("finish", L("Assembler le jeu", "Put the game together", "Montar o jogo"), L("Mettre le nouveau jeu en place", "Swap in the new game", "Colocar o jogo novo no lugar")),
     };
     static readonly Dictionary<string, (double From, double Size)> Weight = new()
     {
@@ -383,7 +386,7 @@ public partial class MainWindow
             rows[stage.Id] = row;
             StageList.Children.Add(row.Root);
         }
-        if (update) rows["read"].Small(L("Vos fichiers du jeu sont gardés : le .nup n'est pas nécessaire", "Your game files are kept: the .nup isn't needed"));
+        if (update) rows["read"].Small(L("Vos fichiers du jeu sont gardés : le .nup n'est pas nécessaire", "Your game files are kept: the .nup isn't needed", "Os arquivos do seu jogo ficam guardados: o .nup não é necessário"));
     }
 
     /// A step begins: the one before it is done, on the page and on the staff
@@ -405,7 +408,7 @@ public partial class MainWindow
         {
             updating = false;
             MakeRows(update: false);
-            BuildTitle.Text = L("Installation en cours", "Installing the game");
+            BuildTitle.Text = L("Installation en cours", "Installing the game", "Instalando o jogo");
             BuildSub.Text = outPath;
         }
         log.Clear();
@@ -466,7 +469,7 @@ public partial class MainWindow
         else if (FilesLine.Match(line) is { Success: true } m) filesOf = int.Parse(m.Groups[1].Value);
         else if (FileLine.IsMatch(line)) filesDone++;
         if (current == "compile" && filesChanged < 0 && filesOf > 0 && rows.TryGetValue("compile", out var c))
-            c.Small(L($"{filesDone} fichiers sur {filesOf}", $"{filesDone} of {filesOf} files"));
+            c.Small(L($"{filesDone} fichiers sur {filesOf}", $"{filesDone} of {filesOf} files", $"{filesDone} de {filesOf} arquivos"));
         AddLog(line);
     }
 
@@ -501,9 +504,9 @@ public partial class MainWindow
     void ChangedFiles()
     {
         if (filesChanged < 0 || !rows.TryGetValue("compile", out var row)) return;
-        row.Small(filesChanged == 0 ? L("Tout est déjà compilé", "Everything is already built")
-                : filesChanged >= filesOf ? L($"{filesCompiled} fichiers sur {filesChanged}", $"{filesCompiled} of {filesChanged} files")
-                : L($"{filesCompiled} fichiers changés sur {filesChanged}", $"{filesCompiled} of {filesChanged} changed files"));
+        row.Small(filesChanged == 0 ? L("Tout est déjà compilé", "Everything is already built", "Tudo já está compilado")
+                : filesChanged >= filesOf ? L($"{filesCompiled} fichiers sur {filesChanged}", $"{filesCompiled} of {filesChanged} files", $"{filesCompiled} de {filesChanged} arquivos")
+                : L($"{filesCompiled} fichiers changés sur {filesChanged}", $"{filesCompiled} of {filesChanged} changed files", $"{filesCompiled} de {filesChanged} arquivos alterados"));
     }
 
     void AddLog(string line)
@@ -523,26 +526,26 @@ public partial class MainWindow
     {
         foreach (var r in rows.Values) r.Tick();
         if (runner == null) return;
-        var tail = updating ? L(" Le jeu actuel reste jouable jusqu'à la fin.", " Your current game stays playable until the end.")
-                            : L(" Le PC reste utilisable.", " Your PC stays usable.");
+        var tail = updating ? L(" Le jeu actuel reste jouable jusqu'à la fin.", " Your current game stays playable until the end.", " O seu jogo atual continua jogável até o fim.")
+                            : L(" Le PC reste utilisable.", " Your PC stays usable.", " O seu PC continua utilizável.");
         if (current == "compile")
         {
             var left = compileEta >= 0 ? TimeLeft(compileEta)
                 : compiled > 0.03 ? TimeLeft(compileClock.Elapsed.TotalSeconds / compiled * (1 - compiled) + 60)
-                : L("Estimation en cours.", "Estimating.");
+                : L("Estimation en cours.", "Estimating.", "Estimando.");
             BuildNote.Text = left + tail;
             return;
         }
-        BuildNote.Text = (updating ? L("Mise à jour en cours.", "Updating.") : L("Compter 10 à 45 minutes en tout.", "Allow 10 to 45 minutes in all.")) + tail;
+        BuildNote.Text = (updating ? L("Mise à jour en cours.", "Updating.", "Atualizando.") : L("Compter 10 à 45 minutes en tout.", "Allow 10 to 45 minutes in all.", "Reserve de 10 a 45 minutos no total.")) + tail;
     }
 
     static string TimeLeft(double seconds)
     {
-        if (seconds < 45) return L("Moins d'une minute.", "Less than a minute left.");
-        if (seconds < 90) return L("Encore une minute environ.", "About a minute left.");
+        if (seconds < 45) return L("Moins d'une minute.", "Less than a minute left.", "Falta menos de um minuto.");
+        if (seconds < 90) return L("Encore une minute environ.", "About a minute left.", "Falta cerca de um minuto.");
         var minutes = (int)Math.Round(seconds / 60);
-        return minutes >= 60 ? L($"Encore {minutes / 60} h {minutes % 60} min environ.", $"About {minutes / 60} h {minutes % 60} min left.")
-                             : L($"Encore {minutes} minutes environ.", $"About {minutes} minutes left.");
+        return minutes >= 60 ? L($"Encore {minutes / 60} h {minutes % 60} min environ.", $"About {minutes / 60} h {minutes % 60} min left.", $"Faltam cerca de {minutes / 60} h {minutes % 60} min.")
+                             : L($"Encore {minutes} minutes environ.", $"About {minutes} minutes left.", $"Faltam cerca de {minutes} minutos.");
     }
 
     void Ended(string? failure)
@@ -569,7 +572,7 @@ public partial class MainWindow
             if (rows.TryGetValue(current, out var row)) row.Stopped();
             staff[current]?.Problem();
         }
-        ShowProblem(failure ?? L("Les outils se sont arrêtés sans dire pourquoi.", "The build tools stopped without saying why."),
+        ShowProblem(failure ?? L("Les outils se sont arrêtés sans dire pourquoi.", "The build tools stopped without saying why.", "As ferramentas de compilação pararam sem dizer por quê."),
                     tools: failure?.Contains("antivirus", StringComparison.OrdinalIgnoreCase) == true);
     }
 
@@ -578,7 +581,7 @@ public partial class MainWindow
         var show = Log.Visibility != Visibility.Visible;
         Log.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
         StageList.Visibility = show ? Visibility.Collapsed : Visibility.Visible;
-        LogLink.Content = show ? L("Masquer les détails", "Hide details") : L("Afficher les détails", "Show details");
+        LogLink.Content = show ? L("Masquer les détails", "Hide details", "Esconder detalhes") : L("Afficher les détails", "Show details", "Mostrar detalhes");
         if (show)
         {
             Log.Text = log.ToString();
@@ -604,8 +607,8 @@ public partial class MainWindow
     /// Options, Game: the shortcuts as they are, and what ReLink keeps on the PC (once a build has measured it)
     void BuildShortcutRows()
     {
-        SwitchRow(RowsGame, L("Raccourci sur le bureau", "Desktop shortcut"), null, out DesktopTick, out _);
-        SwitchRow(RowsGame, L("Entrée dans le menu Démarrer", "Start menu entry"), null, out StartTick, out _);
+        SwitchRow(RowsGame, L("Raccourci sur le bureau", "Desktop shortcut", "Atalho na área de trabalho"), null, out DesktopTick, out _);
+        SwitchRow(RowsGame, L("Entrée dans le menu Démarrer", "Start menu entry", "Entrada no menu Iniciar"), null, out StartTick, out _);
         DesktopTick.IsChecked = File.Exists(Finder.DesktopLink);
         StartTick.IsChecked = File.Exists(Finder.StartLink);
         DesktopTick.Click += ShortcutsChanged;
@@ -648,14 +651,14 @@ public partial class MainWindow
         StorageRow.Visibility = Visibility.Collapsed;
         var (total, freeable) = await Task.Run(Storage.Measure);
         if (total < 100L << 20) return;
-        var where = Storage.WorkChosen ? L($"{Storage.Base} et {Storage.Work}", $"{Storage.Base} and {Storage.Work}") : Storage.Base;
+        var where = Storage.WorkChosen ? L($"{Storage.Base} et {Storage.Work}", $"{Storage.Base} and {Storage.Work}", $"{Storage.Base} e {Storage.Work}") : Storage.Base;
         StorageNote.Text = freeable >= 100L << 20
             ? L($"ReLink garde {Bytes(total)} sur ce PC ({where}). {Bytes(freeable)} ne servent qu'à rendre la prochaine mise à jour plus rapide et peuvent être libérés : le jeu reste jouable.",
-                $"ReLink keeps {Bytes(total)} on this PC ({where}). {Bytes(freeable)} of it only makes the next update quicker and can be freed: your game keeps playing.")
-            : L($"ReLink garde {Bytes(total)} sur ce PC ({where}) : le lanceur et ses outils.", $"ReLink keeps {Bytes(total)} on this PC ({where}): the launcher and its tools.");
+                $"ReLink keeps {Bytes(total)} on this PC ({where}). {Bytes(freeable)} of it only makes the next update quicker and can be freed: your game keeps playing.", $"O ReLink ocupa {Bytes(total)} neste PC ({where}). {Bytes(freeable)} disso só deixa a próxima atualização mais rápida e pode ser liberado: o seu jogo continua funcionando.")
+            : L($"ReLink garde {Bytes(total)} sur ce PC ({where}) : le lanceur et ses outils.", $"ReLink keeps {Bytes(total)} on this PC ({where}): the launcher and its tools.", $"O ReLink ocupa {Bytes(total)} neste PC ({where}): o launcher e as ferramentas dele.");
         FreeLink.Visibility = freeable >= 100L << 20 ? Visibility.Visible : Visibility.Collapsed;
         FreeLink.IsEnabled = true;
-        FreeLink.Content = L("Libérer cet espace", "Free up this space");
+        FreeLink.Content = L("Libérer cet espace", "Free up this space", "Liberar este espaço");
         StorageRow.Visibility = Visibility.Visible;
     }
 
@@ -674,12 +677,12 @@ public partial class MainWindow
     async void FreeSpace(object sender, RoutedEventArgs e)
     {
         FreeLink.IsEnabled = false;
-        FreeLink.Content = L("Libération…", "Freeing…");
+        FreeLink.Content = L("Libération…", "Freeing…", "Liberando…");
         var left = await Task.Run(Storage.Free);
         await ShowStorageUse();
         if (left >= 100L << 20)
             StorageNote.Text += L($" ({Bytes(left)} n'ont pas pu être supprimés : un fichier est utilisé. Fermez le jeu et réessayez.)",
-                                  $" ({Bytes(left)} could not be deleted: a file is in use. Close the game and try again.)");
+                                  $" ({Bytes(left)} could not be deleted: a file is in use. Close the game and try again.)", $" ({Bytes(left)} não puderam ser apagados: um arquivo está em uso. Feche o jogo e tente de novo.)");
     }
 
     // ================= when something goes wrong =================
@@ -688,33 +691,33 @@ public partial class MainWindow
     {
         lastFailure = why;
         ProblemSteps.Children.Clear();
-        ProblemSub.Text = updating ? L("Votre jeu actuel n'a pas changé et reste jouable.", "Your current game is unchanged and still plays.")
-                                   : L("Rien n'a été modifié dans le dossier du jeu.", "Nothing was changed in your game folder.");
+        ProblemSub.Text = updating ? L("Votre jeu actuel n'a pas changé et reste jouable.", "Your current game is unchanged and still plays.", "O seu jogo atual não mudou e continua funcionando.")
+                                   : L("Rien n'a été modifié dans le dossier du jeu.", "Nothing was changed in your game folder.", "Nada foi mudado na pasta do seu jogo.");
         if (tools)
         {
-            ProblemTitle.Text = L("Les outils sont à réparer", "The build tools need repairing");
-            ProblemHead.Text = L("Votre antivirus a retiré une partie des outils", "Your antivirus removed part of the build tools");
+            ProblemTitle.Text = L("Les outils sont à réparer", "The build tools need repairing", "As ferramentas de compilação precisam de reparo");
+            ProblemHead.Text = L("Votre antivirus a retiré une partie des outils", "Your antivirus removed part of the build tools", "O seu antivírus removeu parte das ferramentas de compilação");
             ProblemText.Text = why + "\n\n" + L("Les antivirus prennent parfois par erreur des outils de développement non signés pour une menace.",
-                                                "Antivirus programs sometimes flag unsigned developer tools by mistake.");
+                                                "Antivirus programs sometimes flag unsigned developer tools by mistake.", "Os antivírus às vezes marcam por engano ferramentas de desenvolvimento sem assinatura.");
             var steps = new[]
             {
-                L("Ouvrez Sécurité Windows, puis Historique de protection, et restaurez les fichiers retirés.", "Open Windows Security, then Protection history, and restore the removed files."),
-                L($"Ou ajoutez {Storage.Base} aux exclusions.", $"Or add {Storage.Base} to its exclusions."),
-                L("Puis choisissez Réparer : ReLink télécharge de nouveau ses outils et vérifie chacun.", "Then press Repair: ReLink downloads its tools again and checks each one."),
+                L("Ouvrez Sécurité Windows, puis Historique de protection, et restaurez les fichiers retirés.", "Open Windows Security, then Protection history, and restore the removed files.", "Abra a Segurança do Windows, depois o Histórico de proteção, e restaure os arquivos removidos."),
+                L($"Ou ajoutez {Storage.Base} aux exclusions.", $"Or add {Storage.Base} to its exclusions.", $"Ou adicione {Storage.Base} às exclusões dele."),
+                L("Puis choisissez Réparer : ReLink télécharge de nouveau ses outils et vérifie chacun.", "Then press Repair: ReLink downloads its tools again and checks each one.", "Depois aperte Reparar: o ReLink baixa as ferramentas de novo e verifica cada uma."),
             };
             for (var i = 0; i < steps.Length; i++)
                 ProblemSteps.Children.Add(new TextBlock { Text = $"{i + 1}.  {steps[i]}", Style = St("Body"), Margin = new Thickness(0, 6, 0, 0) });
         }
         else
         {
-            ProblemTitle.Text = updating ? L("La mise à jour s'est arrêtée", "The update stopped") : L("L'installation s'est arrêtée", "The install stopped");
-            ProblemHead.Text = L("Ce qui s'est passé", "What went wrong");
+            ProblemTitle.Text = updating ? L("La mise à jour s'est arrêtée", "The update stopped", "A atualização parou") : L("L'installation s'est arrêtée", "The install stopped", "A instalação parou");
+            ProblemHead.Text = L("Ce qui s'est passé", "What went wrong", "O que deu errado");
             ProblemText.Text = why;
         }
         repairable = tools;   // (Repair is the card's button: Sidebar.cs)
         RepairLink.Visibility = Visibility.Collapsed;
-        DetailsLink.Content = L("Afficher les détails", "Show details");
-        CopyLink.Content = L("Copier pour un rapport", "Copy for a report");
+        DetailsLink.Content = L("Afficher les détails", "Show details", "Mostrar detalhes");
+        CopyLink.Content = L("Copier pour un rapport", "Copy for a report", "Copiar para um relatório");
         Show(View.Problem);
     }
 
@@ -735,7 +738,7 @@ public partial class MainWindow
         var lines = log.ToString().Split('\n');
         var text = $"Project ReLink {Tools.Find()?.Version ?? "(source)"} on Windows {Environment.OSVersion.Version}\n" +
                    $"{ProblemTitle.Text}: {lastFailure}\n\n" + string.Join("\n", lines.Skip(Math.Max(0, lines.Length - 200)));
-        try { Clipboard.SetText(text); CopyLink.Content = L("Copié", "Copied"); } catch (Exception) { }
+        try { Clipboard.SetText(text); CopyLink.Content = L("Copié", "Copied", "Copiado"); } catch (Exception) { }
     }
 
     void Back(object sender, RoutedEventArgs e)
@@ -766,12 +769,12 @@ public partial class MainWindow
         updating = true;
         outPath = folder;
         finished = "";
-        var to = tag ?? L("la dernière version", "the latest version");
+        var to = tag ?? L("la dernière version", "the latest version", "a versão mais recente");
         var from = Game.Version(folder) ?? Tools.Find()?.Version;
         MakeRows(update: true);
-        BuildTitle.Text = L("Mise à jour du jeu", "Updating your game");
-        BuildSub.Text = from != null && from != to ? L($"De {from} à {to}", $"From {from} to {to}") : to;
-        BuildNote.Text = L("Réception de la mise à jour.", "Getting the update.");
+        BuildTitle.Text = L("Mise à jour du jeu", "Updating your game", "Atualizando o seu jogo");
+        BuildSub.Text = from != null && from != to ? L($"De {from} à {to}", $"From {from} to {to}", $"De {from} para {to}") : to;
+        BuildNote.Text = L("Réception de la mise à jour.", "Getting the update.", "Baixando a atualização.");
         Show(View.Build);
         SetProgress(0);
         Stage("download");
@@ -798,7 +801,7 @@ public partial class MainWindow
         rows.GetValueOrDefault("download")?.Stopped();
         staff["download"]?.Problem();
         ShowProblem(why, tools: false);
-        ProblemTitle.Text = L("La mise à jour n'a pas pu être téléchargée", "The update could not be downloaded");
+        ProblemTitle.Text = L("La mise à jour n'a pas pu être téléchargée", "The update could not be downloaded", "Não foi possível baixar a atualização");
     }
 
     /// The game folder built again with the tools there are (NVIDIA DLSS turned on: what it changes is compiled, NVIDIA's SDK
@@ -809,8 +812,8 @@ public partial class MainWindow
         outPath = folder;
         finished = "";
         MakeRows(update: true);
-        rows.GetValueOrDefault("download")?.Small(L("Rien à télécharger", "Nothing to download"));
-        BuildTitle.Text = title ?? L("Reconstruction du jeu avec NVIDIA DLSS", "Building your game again with NVIDIA DLSS");
+        rows.GetValueOrDefault("download")?.Small(L("Rien à télécharger", "Nothing to download", "Nada para baixar"));
+        BuildTitle.Text = title ?? L("Reconstruction du jeu avec NVIDIA DLSS", "Building your game again with NVIDIA DLSS", "Compilando o jogo de novo com o NVIDIA DLSS");
         BuildSub.Text = folder;
         Run(tools, new List<string> { "--update", folder }, keepRows: true);
     }
@@ -819,7 +822,7 @@ public partial class MainWindow
     internal void UpdateBuild(Tools tools, string folder)
     {
         download = null;
-        rows.GetValueOrDefault("download")?.Small(L("Outils vérifiés", "Build tools checked"));
+        rows.GetValueOrDefault("download")?.Small(L("Outils vérifiés", "Build tools checked", "Ferramentas de compilação verificadas"));
         Run(tools, new List<string> { "--update", folder }, keepRows: true);
     }
 }

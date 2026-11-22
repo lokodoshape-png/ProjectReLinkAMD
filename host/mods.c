@@ -13,6 +13,7 @@
    differ, the player is told once that the game must be built again from the launcher for them to take effect.
    From Skybound's loader (NotRexed/SkyboundTotk a64-kit/hos/mods.c, MIT): its RomFS part. */
 #include "hos.h"
+#include "hos_lang.h"   /* (relink-amd: the boxes in Portuguese) */
 #include "hos_paths.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -258,15 +259,22 @@ static void exefs_check(void) {
 #ifdef _WIN32
     char text[2048];
     if (n)
-        snprintf(text, sizeof text, "The code patches (exefs) in the mods folder have changed since this game was built: %d patch "
+        snprintf(text, sizeof text, HOS_T("The code patches (exefs) in the mods folder have changed since this game was built: %d patch "
                  "file%s there now (%s).\n\nReLink translates the game's code when it builds the game, so a code patch takes effect "
                  "only once the game is built again: open ReLink and choose Build again on its first page (it builds with the "
                  "patches in the mods folder). The game starts now as it was built. RomFS mods work as they are.",
+                 "Os patches de código (exefs) na pasta mods mudaram desde que este jogo foi compilado: %d arquivo%s de patch "
+                 "lá agora (%s).\n\nO ReLink traduz o código do jogo quando compila o jogo, então um patch de código só vale "
+                 "depois que o jogo for compilado de novo: abra o ReLink e escolha Compilar de novo na primeira página (ele compila "
+                 "com os patches da pasta mods). O jogo abre agora como foi compilado. Os mods de RomFS funcionam como estão."),
                  n, n == 1 ? "" : "s", names.text);
     else
-        snprintf(text, sizeof text, "The code patches (exefs) this game was built with are no longer in the mods folder.\n\n"
+        snprintf(text, sizeof text, "%s", HOS_T("The code patches (exefs) this game was built with are no longer in the mods folder.\n\n"
                  "ReLink translates the game's code when it builds the game, so the game keeps them until it is built again: "
-                 "open ReLink and choose Build again on its first page. The game starts now as it was built.");
+                 "open ReLink and choose Build again on its first page. The game starts now as it was built.",
+                 "Os patches de código (exefs) com que este jogo foi compilado não estão mais na pasta mods.\n\n"
+                 "O ReLink traduz o código do jogo quando compila o jogo, então o jogo os mantém até ser compilado de novo: "
+                 "abra o ReLink e escolha Compilar de novo na primeira página. O jogo abre agora como foi compilado."));
     wchar_t wtext[2048];   /* (the mods' names are UTF-8) */
     if (MultiByteToWideChar(CP_UTF8, 0, text, -1, wtext, 2048))
         MessageBoxW(NULL, wtext, L"Project ReLink: mods", MB_OK | MB_ICONINFORMATION | MB_SETFOREGROUND);

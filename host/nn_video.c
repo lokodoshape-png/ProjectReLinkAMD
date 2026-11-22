@@ -12,6 +12,7 @@
    free registered buffer (host memory: the pool's guest memory is not used). The video service itself (nn::gsv) is
    not emulated: nn::codec::video::Initialize does nothing. */
 #include "hos.h"
+#include "hos_lang.h"   /* (relink-amd: the boxes in Portuguese) */
 #include <stdlib.h>
 #include <string.h>
 #define WIN32_LEAN_AND_MEAN
@@ -59,9 +60,11 @@ typedef struct Pending { AVPacket *pkt; struct Pending *next; } Pending;
    Microsoft's free "AV1 Video Extension" (preinstalled on most PCs, not all). Yes opens its Store page */
 static DWORD WINAPI av1_notice(LPVOID unused) {
     (void)unused;
-    if (MessageBoxA(NULL, "The game's movies need Microsoft's free \"AV1 Video Extension\", which this PC doesn't have, so they "
-                          "show black (the sound plays).\n\nOpen its page in the Microsoft Store now? Install it, then start the game again.",
-                    "Project ReLink", MB_YESNO | MB_ICONINFORMATION | MB_SETFOREGROUND) == IDYES)
+    if (hos_box(HOS_T("The game's movies need Microsoft's free \"AV1 Video Extension\", which this PC doesn't have, so they "
+                      "show black (the sound plays).\n\nOpen its page in the Microsoft Store now? Install it, then start the game again.",
+                      "Os vídeos do jogo precisam da \"Extensão de Vídeo AV1\" gratuita da Microsoft, que este PC não tem, então eles "
+                      "aparecem pretos (o som toca).\n\nAbrir a página dela na Microsoft Store agora? Instale e depois abra o jogo de novo."),
+                "Project ReLink", MB_YESNO | MB_ICONINFORMATION | MB_SETFOREGROUND) == IDYES)
         ShellExecuteA(NULL, "open", "ms-windows-store://pdp/?ProductId=9MVZQVXJBQ9V", NULL, NULL, SW_SHOWNORMAL);
     return 0;
 }

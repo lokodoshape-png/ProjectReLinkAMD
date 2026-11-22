@@ -25,6 +25,10 @@
 #include <string.h>
 #include <wchar.h>
 
+/* (relink-amd, 0.7.9.6) The setup's words in Brazilian Portuguese on a Windows in Portuguese, else English */
+static int portuguese(void) { return PRIMARYLANGID(GetUserDefaultUILanguage()) == LANG_PORTUGUESE; }
+#define T(en, pt) (portuguese() ? (pt) : (en))
+
 #define WM_STATUS (WM_APP + 1)
 #define WM_DONE (WM_APP + 2)
 #define MAX_PARTS 16
@@ -55,7 +59,7 @@ static void fail(const wchar_t *fmt, ...) {
     va_start(ap, fmt);
     vswprintf(msg, 1024, fmt, ap);
     va_end(ap);
-    MessageBoxW(g_win, msg, L"ReLink setup", MB_OK | MB_ICONERROR);
+    MessageBoxW(g_win, msg, T(L"ReLink setup", L"Instalação do ReLink"), MB_OK | MB_ICONERROR);
     PostMessageW(g_win, WM_DONE, 1, 0);
     ExitThread(1);
 }
@@ -449,7 +453,7 @@ static DWORD WINAPI work(LPVOID unused) {
         Sleep(2000);
     }
     wchar_t base[MAX_PATH], downloads[MAX_PATH];
-    if (SHGetFolderPathW(NULL, CSIDL_LOCAL_APPDATA, NULL, 0, base) != S_OK) fail(L"No local application data folder.");
+    if (SHGetFolderPathW(NULL, CSIDL_LOCAL_APPDATA, NULL, 0, base) != S_OK) fail(T(L"No local application data folder.", L"Não há pasta de dados locais de aplicativos."));
     wcscat(base, L"\\ReLink");
     {   /* (RELINK_SETUP_BASE=<folder>: install there instead, for testing installs and updates without touching the real one) */
         const wchar_t *tb = _wgetenv(L"RELINK_SETUP_BASE");
@@ -458,7 +462,7 @@ static DWORD WINAPI work(LPVOID unused) {
     swprintf(downloads, MAX_PATH, L"%ls\\downloads", base);
     mkdirs(downloads);
 
-    status(L"Looking for the latest ReLink...");
+    status(T(L"Looking for the latest ReLink...", L"Procurando a versão mais recente do ReLink..."));
     Mem man = {0};
     /* (tried again on a server error or no answer: GitHub's release downloads answered 504 for an hour, 2026-11-08, and every
        start failed at once) */
@@ -469,9 +473,9 @@ static DWORD WINAPI work(LPVOID unused) {
     int ok = 0;
     for (int attempt = 0; attempt < TRIES && !ok; attempt++) {
         if (attempt) {
-            status(L"GitHub didn't answer (%lu). Trying again in %d s...", g_http_status, waits[attempt - 1]);
+            status(T(L"GitHub didn't answer (%lu). Trying again in %d s...", L"O GitHub não respondeu (%lu). Tentando de novo em %d s..."), g_http_status, waits[attempt - 1]);
             Sleep(waits[attempt - 1] * 1000);
-            status(L"Looking for the latest ReLink...");
+            status(T(L"Looking for the latest ReLink...", L"Procurando a versão mais recente do ReLink..."));
         }
         free(man.p);
         man = (Mem){0};
@@ -489,11 +493,16 @@ static DWORD WINAPI work(LPVOID unused) {
     }
     if (!ok)
         fail(g_http_status == 404
-                 ? L"ReLink has no release to install from yet. Its releases page says when one is out: "
-                   L"https://github.com/lokodoshape-png/ProjectReLinkAMD/releases"
-             : g_http_status ? L"GitHub's download servers are failing right now (an error 500 or above, tried 8 times over 3 minutes). "
-                               L"This is on GitHub's side: try again in a few minutes, or later today."
-                             : L"Could not reach GitHub to get ReLink. Check your internet connection and try again.");
+                 ? T(L"ReLink has no release to install from yet. Its releases page says when one is out: "
+                     L"https://github.com/lokodoshape-png/ProjectReLinkAMD/releases",
+                     L"O ReLink ainda não tem uma versão para instalar. A página de releases diz quando sair uma: "
+                     L"https://github.com/lokodoshape-png/ProjectReLinkAMD/releases")
+             : g_http_status ? T(L"GitHub's download servers are failing right now (an error 500 or above, tried 8 times over 3 minutes). "
+                                 L"This is on GitHub's side: try again in a few minutes, or later today.",
+                                 L"Os servidores de download do GitHub estão falhando agora (erro 500 ou acima, 8 tentativas em 3 minutos). "
+                                 L"O problema é do GitHub: tente de novo em alguns minutos, ou mais tarde hoje.")
+                             : T(L"Could not reach GitHub to get ReLink. Check your internet connection and try again.",
+                                 L"Não foi possível acessar o GitHub para baixar o ReLink. Verifique a sua internet e tente de novo."));
 
     char tag[128] = "", run[260] = "";
     Part parts[MAX_PARTS];
@@ -506,15 +515,17 @@ static DWORD WINAPI work(LPVOID unused) {
             if (sscanf(line + 5, "%64s %llu %259s %259s %259s %1023s", p->sha, &p->size, p->dest, p->from, p->to, p->url) == 6) nparts++;
         }
     }
-    if (!tag[0] || !run[0] || !nparts) fail(L"The release's setup list could not be read. Try again later.");
+    if (!tag[0] || !run[0] || !nparts) fail(T(L"The release's setup list could not be read. Try again later.", L"A lista de instalação da versão não pôde ser lida. Tente de novo mais tarde."));
     {
         char want[128];
         wanted_tag(want, sizeof want);
         if (want[0] && strcmp(want, tag)) {
             wchar_t ww[128], wt[128];
             MultiByteToWideChar(CP_UTF8, 0, want, -1, ww, 128), MultiByteToWideChar(CP_UTF8, 0, tag, -1, wt, 128);
-            fail(L"GitHub answered with the setup list of %ls, not %ls (its download links can lag right after a release). Try the "
-                 L"update again in a few minutes.", wt, ww);
+            fail(T(L"GitHub answered with the setup list of %ls, not %ls (its download links can lag right after a release). Try the "
+                   L"update again in a few minutes.",
+                   L"O GitHub respondeu com a lista de instalação da %ls, não da %ls (os links de download podem atrasar logo depois de uma "
+                   L"versão). Tente a atualização de novo em alguns minutos."), wt, ww);
         }
     }
 
@@ -539,7 +550,7 @@ static DWORD WINAPI work(LPVOID unused) {
             w(p->sha, wsha, 65);
             swprintf(zip, MAX_PATH, L"%ls\\%ls.zip", downloads, wsha);
             if (reuse_part(versions, tag, p, install)) {   /* (unchanged since the installed version: its folder moved over) */
-                status(L"Part %d of %d unchanged: kept from the installed version", i + 1, nparts);
+                status(T(L"Part %d of %d unchanged: kept from the installed version", L"Parte %d de %d sem mudança: mantida da versão instalada"), i + 1, nparts);
                 continue;
             }
             char have[65] = "";
@@ -549,15 +560,15 @@ static DWORD WINAPI work(LPVOID unused) {
                 int got = 0;
                 for (int attempt = 0; attempt < TRIES && !got; attempt++) {   /* (a server error or a dropped connection: again) */
                     if (attempt) {
-                        status(L"Part %d of %d: GitHub didn't answer (%lu). Trying again in %d s...", i + 1, nparts, g_http_status,
+                        status(T(L"Part %d of %d: GitHub didn't answer (%lu). Trying again in %d s...", L"Parte %d de %d: o GitHub não respondeu (%lu). Tentando de novo em %d s..."), i + 1, nparts, g_http_status,
                                waits[attempt - 1]);
                         Sleep(waits[attempt - 1] * 1000);
                     }
-                    status(L"Downloading part %d of %d (%llu MB)...", i + 1, nparts, p->size >> 20);
+                    status(T(L"Downloading part %d of %d (%llu MB)...", L"Baixando a parte %d de %d (%llu MB)..."), i + 1, nparts, p->size >> 20);
                     FileSink fs;
                     BCRYPT_ALG_HANDLE a;
                     fs.f = CreateFileW(part, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_FLAG_SEQUENTIAL_SCAN, NULL);
-                    if (fs.f == INVALID_HANDLE_VALUE) fail(L"Could not write to %ls.", downloads);
+                    if (fs.f == INVALID_HANDLE_VALUE) fail(T(L"Could not write to %ls.", L"Não foi possível gravar em %ls."), downloads);
                     BCryptOpenAlgorithmProvider(&a, BCRYPT_SHA256_ALGORITHM, NULL, 0);
                     BCryptCreateHash(a, &fs.h, NULL, 0, NULL, 0, 0);
                     g_http_status = 0;
@@ -578,15 +589,19 @@ static DWORD WINAPI work(LPVOID unused) {
                     if (!got && !retryable(g_http_status)) break;
                 }
                 if (!got) DeleteFileW(part), fail(retryable(g_http_status)
-                    ? L"Downloading part %d of %d failed: GitHub's download servers are failing right now (tried 8 times over 3 "
-                      L"minutes). This is on GitHub's side. The parts already downloaded are kept: run ReLink-Setup.exe again in a "
-                      L"few minutes and it carries on from here."
-                    : L"Downloading part %d of %d failed. Check your connection and free space, then try again.", i + 1, nparts);
-                if (strcmp(have, p->sha)) DeleteFileW(part), fail(L"Part %d of %d did not download correctly (its checksum differs). Try again.", i + 1, nparts);
+                    ? T(L"Downloading part %d of %d failed: GitHub's download servers are failing right now (tried 8 times over 3 "
+                        L"minutes). This is on GitHub's side. The parts already downloaded are kept: run ReLink-Setup.exe again in a "
+                        L"few minutes and it carries on from here.",
+                        L"O download da parte %d de %d falhou: os servidores de download do GitHub estão falhando agora (8 tentativas em 3 "
+                        L"minutos). O problema é do GitHub. As partes já baixadas ficam guardadas: rode a instalação de novo em alguns "
+                        L"minutos e ela continua daqui.")
+                    : T(L"Downloading part %d of %d failed. Check your connection and free space, then try again.",
+                        L"O download da parte %d de %d falhou. Verifique a sua conexão e o espaço livre, e tente de novo."), i + 1, nparts);
+                if (strcmp(have, p->sha)) DeleteFileW(part), fail(T(L"Part %d of %d did not download correctly (its checksum differs). Try again.", L"A parte %d de %d não baixou direito (o checksum é diferente). Tente de novo."), i + 1, nparts);
                 DeleteFileW(zip);
                 MoveFileW(part, zip);
             }
-            status(L"Unpacking part %d of %d...", i + 1, nparts);
+            status(T(L"Unpacking part %d of %d...", L"Descompactando a parte %d de %d..."), i + 1, nparts);
             wchar_t dest[MAX_PATH], wdest[260], tarcmd[2 * MAX_PATH + 64], sys[MAX_PATH];
             w(p->dest, wdest, 260);
             if (!strcmp(p->dest, ".")) wcscpy(dest, install);
@@ -595,22 +610,22 @@ static DWORD WINAPI work(LPVOID unused) {
             mkdirs(dest);
             GetSystemDirectoryW(sys, MAX_PATH);
             swprintf(tarcmd, 2 * MAX_PATH + 64, L"\"%ls\\tar.exe\" -xf \"%ls\" -C \"%ls\"", sys, zip, dest);
-            if (run_wait(tarcmd, dest) != 0) fail(L"Unpacking part %d of %d failed (Windows' tar.exe). Is there enough free space on C:?", i + 1, nparts);
+            if (run_wait(tarcmd, dest) != 0) fail(T(L"Unpacking part %d of %d failed (Windows' tar.exe). Is there enough free space on C:?", L"A descompactação da parte %d de %d falhou (tar.exe do Windows). Há espaço livre suficiente no C:?"), i + 1, nparts);
             if (strcmp(p->from, "-") && strcmp(p->to, "-")) {   /* (llvm-mingw-<version>-ucrt-x86_64 -> llvm-mingw) */
                 wchar_t from[MAX_PATH], to[MAX_PATH], wf[260], wt[260];
                 w(p->from, wf, 260), w(p->to, wt, 260);
                 swprintf(from, MAX_PATH, L"%ls\\%ls", dest, wf);
                 swprintf(to, MAX_PATH, L"%ls\\%ls", dest, wt);
                 if (GetFileAttributesW(to) == INVALID_FILE_ATTRIBUTES && !MoveFileW(from, to))
-                    fail(L"Could not set up part %d of %d (renaming %ls).", i + 1, nparts, wf);
+                    fail(T(L"Could not set up part %d of %d (renaming %ls).", L"Não foi possível preparar a parte %d de %d (renomeando %ls)."), i + 1, nparts, wf);
             }
         }
         wchar_t staged_exe[MAX_PATH];
         swprintf(staged_exe, MAX_PATH, L"%ls\\%ls", install, wrun);
         for (wchar_t *q = staged_exe; *q; q++) if (*q == L'/') *q = L'\\';
         if (GetFileAttributesW(staged_exe) == INVALID_FILE_ATTRIBUTES)
-            fail(L"ReLink is missing after unpacking (%ls). Your antivirus may have removed it: allow the folder %ls and run the setup again.", staged_exe, base);
-        if (!MoveFileW(install, final_dir)) fail(L"Could not finish installing into %ls.", final_dir);
+            fail(T(L"ReLink is missing after unpacking (%ls). Your antivirus may have removed it: allow the folder %ls and run the setup again.", L"O ReLink sumiu depois da descompactação (%ls). O seu antivírus pode tê-lo removido: libere a pasta %ls e rode a instalação de novo."), staged_exe, base);
+        if (!MoveFileW(install, final_dir)) fail(T(L"Could not finish installing into %ls.", L"Não foi possível terminar a instalação em %ls."), final_dir);
         wcscpy(install, final_dir);
         write_small(marker, tag);
         write_parts(install, parts, nparts);
@@ -623,7 +638,7 @@ static DWORD WINAPI work(LPVOID unused) {
     prune(versions, downloads, tag, parts, nparts);
     rmtree(downloads);   /* (installed: its zips are not kept; an update moves unchanged folders over instead, reuse_part) */
 
-    status(L"Starting ReLink...");
+    status(T(L"Starting ReLink...", L"Abrindo o ReLink..."));
     wchar_t cmd[4096], dir[MAX_PATH];
     wcscpy(dir, exe);
     wchar_t *slash = wcsrchr(dir, L'\\');
@@ -631,7 +646,7 @@ static DWORD WINAPI work(LPVOID unused) {
     swprintf(cmd, 4096, L"\"%ls\" %ls", exe, g_cmdline);
     STARTUPINFOW si = {sizeof si};
     PROCESS_INFORMATION pi;
-    if (!CreateProcessW(NULL, cmd, NULL, NULL, FALSE, 0, NULL, dir, &si, &pi)) fail(L"Could not start %ls.", exe);
+    if (!CreateProcessW(NULL, cmd, NULL, NULL, FALSE, 0, NULL, dir, &si, &pi)) fail(T(L"Could not start %ls.", L"Não foi possível abrir %ls."), exe);
     CloseHandle(pi.hThread), CloseHandle(pi.hProcess);
     PostMessageW(g_win, WM_DONE, 0, 0);
     return 0;
@@ -700,7 +715,7 @@ int WINAPI wWinMain(HINSTANCE inst, HINSTANCE prev, LPWSTR cmdline, int show) {
                     CloseHandle(pi.hThread), CloseHandle(pi.hProcess);
                     return 0;
                 }
-                MessageBoxW(NULL, L"The game in this folder could not be started. Install it again with ReLink-Setup.exe.", L"Project ReLink",
+                MessageBoxW(NULL, T(L"The game in this folder could not be started. Install it again with ReLink-Setup.exe.", L"O jogo nesta pasta não pôde ser aberto. Instale de novo com o ReLink-Setup.exe."), L"Project ReLink",
                             MB_ICONERROR);
                 return 1;
             }
@@ -716,9 +731,9 @@ int WINAPI wWinMain(HINSTANCE inst, HINSTANCE prev, LPWSTR cmdline, int show) {
     wc.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
     RegisterClassW(&wc);
     const int ww = 460, wh = 140;
-    g_win = CreateWindowW(L"ReLinkSetup", L"Project ReLink setup", WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX,
+    g_win = CreateWindowW(L"ReLinkSetup", T(L"Project ReLink setup", L"Instalação do Project ReLink"), WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX,
                           (GetSystemMetrics(SM_CXSCREEN) - ww) / 2, (GetSystemMetrics(SM_CYSCREEN) - wh) / 2, ww, wh, NULL, NULL, inst, NULL);
-    g_text = CreateWindowW(L"STATIC", L"Starting...", WS_CHILD | WS_VISIBLE, 16, 16, ww - 48, 22, g_win, NULL, inst, NULL);
+    g_text = CreateWindowW(L"STATIC", T(L"Starting...", L"Iniciando..."), WS_CHILD | WS_VISIBLE, 16, 16, ww - 48, 22, g_win, NULL, inst, NULL);
     g_bar = CreateWindowW(PROGRESS_CLASSW, NULL, WS_CHILD | WS_VISIBLE | PBS_MARQUEE, 16, 48, ww - 48, 20, g_win, NULL, inst, NULL);
     HFONT f = CreateFontW(-15, 0, 0, 0, FW_NORMAL, 0, 0, 0, DEFAULT_CHARSET, 0, 0, CLEARTYPE_QUALITY, 0, L"Segoe UI");
     SendMessageW(g_text, WM_SETFONT, (WPARAM)f, TRUE);
