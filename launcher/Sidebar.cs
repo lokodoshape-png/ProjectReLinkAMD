@@ -25,7 +25,7 @@ public partial class MainWindow
 
     void SidebarTexts()
     {
-        NavHome.Content = L("Accueil", "Home", "Pasta pessoal");
+        NavHome.Content = L("Accueil", "Home", "Início");
         NavOptions.Content = L("Options", "Options", "Opções");
         Tip(FolderLink, L("Ouvrir le dossier du jeu", "Open the game folder", "Abrir a pasta do jogo"));
         Tip(HelpLink, L("Aide et questions fréquentes", "Help and common questions", "Ajuda e perguntas frequentes"));
@@ -98,7 +98,7 @@ public partial class MainWindow
         var home = view == View.Home;
         var hero = home && NavHome.IsChecked == true;
         NavPanel.IsEnabled = home || (view == View.Build && CanBrowse) || BackToHome;
-        if (view != View.Home) foreach (var n in new[] { NavHome, NavOptions, NavMods }) n.IsChecked = false;   // (none lit: no Home page shows)
+        if (view != View.Home) foreach (var n in new[] { NavHome, NavOptions, NavMods, NavSaves }) n.IsChecked = false;   // (none lit: no Home page shows)
         FolderLink.Visibility = s.Folder != "" && Game.Installed(s.Folder) ? Visibility.Visible : Visibility.Collapsed;
         StepList.Visibility = view is View.Install or View.Build or View.Problem || Browsing ? Visibility.Visible : Visibility.Collapsed;
         HeroPlay.IsEnabled = runner == null && game == null && Game.Installed(s.Folder);

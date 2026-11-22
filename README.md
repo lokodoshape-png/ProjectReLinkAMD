@@ -75,6 +75,16 @@ folder, from the game files the folder keeps: your `.nup` is not needed again. S
 - ReLink itself: `%LOCALAPPDATA%\ReLink`. The build files (about 4 GB) are deleted once the game is ready.
 - To uninstall: delete the game folder, `%LOCALAPPDATA%\ReLink` and the shortcuts.
 
+### Saves from Longshot, Triforce or an emulator
+
+Longshot, Triforce (and Hookshot, which all three come from), the emulators that run the game (Eden, Lichii, Orchid,
+Eglantine, Ryujinx...) and NX2navi keep the game's saves in the same files (`account.sav`, `option.sav`, `slot_00` to
+`slot_05`), so a save made in one carries on in ReLink at the same spot. The launcher's **Saves** page finds them on the PC
+and **Import** copies one into ReLink's (`<game folder>\user\save\5a3c9e1f0b7d24680000000000000001`). ReLink's current saves
+are copied to `<game folder>\save-backups` first; **Keep my game settings** leaves ReLink's `option.sav` as it is. If the page
+does not find a save, **Choose a folder** takes the other program's game folder or the folder holding `option.sav`. Close
+the other program first: it would write its saves again when it closes.
+
 ## Settings
 
 The launcher sets the display (full screen, 3D render resolution, upscaling, sharpness, ultrawide), the smoothness (60

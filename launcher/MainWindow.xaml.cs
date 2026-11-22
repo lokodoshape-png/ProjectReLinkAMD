@@ -87,6 +87,7 @@ public partial class MainWindow : Window
                            "The mods in the game folder's mods. RomFS mods (textures, models, sounds, text) count from the next start; exefs mods (code patches) need the game built again.", "Os mods na pasta mods do jogo. Mods de RomFS (texturas, modelos, sons, texto) valem a partir da próxima abertura; mods de exefs (patches de código) precisam que o jogo seja compilado de novo.");
         ModsOpenFolder.Content = L("Ouvrir le dossier mods", "Open the mods folder", "Abrir a pasta de mods");
         ModsRebuild.Content = L("Reconstruire avec les patchs de code", "Build again with the code patches", "Compilar de novo com os patches de código");
+        SavesTexts();
 
         InstallTitle.Text = L("Installer le jeu", "Install the game", "Instalar o jogo");
         InstallSub.Text = L("ReLink fabrique le jeu sur ce PC à partir de votre propre copie. Il faut le jeu avec sa mise à jour v131072 (build e0f3ccfa) : les autres versions ne fonctionnent pas. Cela se fait une fois et prend de 10 à 45 minutes.",
@@ -184,7 +185,7 @@ public partial class MainWindow : Window
             if (k == v) Appear(page);
         }
         // (Home shows one of its pages: Home itself when coming back from the install, the build or a problem)
-        if (v == View.Home && NavHome.IsChecked != true && NavOptions.IsChecked != true && NavMods.IsChecked != true) NavHome.IsChecked = true;
+        if (v == View.Home && NavHome.IsChecked != true && NavOptions.IsChecked != true && NavMods.IsChecked != true && NavSaves.IsChecked != true) NavHome.IsChecked = true;
         ShowHomePage();
         ProgressBlock.Visibility = v == View.Build ? Visibility.Visible : Visibility.Collapsed;
         UpdateSide();   // (Sidebar.cs: the side for this page)
@@ -204,12 +205,15 @@ public partial class MainWindow : Window
         var hero = home && NavHome.IsChecked == true;
         var options = home && NavOptions.IsChecked == true;
         var mods = home && NavMods.IsChecked == true;
+        var saves = home && NavSaves.IsChecked == true;
         if (hero && HeroView.Visibility != Visibility.Visible) Appear(HeroView);
         if (options && HomeView.Visibility != Visibility.Visible) Appear(HomeView);
         if (mods && ModsView.Visibility != Visibility.Visible) { ShowModsPage(); Appear(ModsView); }
+        if (saves && SavesView.Visibility != Visibility.Visible) { ShowSavesPage(); Appear(SavesView); }
         HeroView.Visibility = hero ? Visibility.Visible : Visibility.Collapsed;
         HomeView.Visibility = options ? Visibility.Visible : Visibility.Collapsed;
         ModsView.Visibility = mods ? Visibility.Visible : Visibility.Collapsed;
+        SavesView.Visibility = saves ? Visibility.Visible : Visibility.Collapsed;
         // (Home's Play is in the sky: the card's goes there; on the options and the mods it stays at hand)
         if (home) UpdateSide();
     }
@@ -363,6 +367,7 @@ public partial class MainWindow : Window
                 ShowHome();
                 ShowVersion("v0.6.1", what == "home-update" ? "v0.7.0" : "v0.6.1", true, true);
                 if (what == "mods") { NavMods.IsChecked = true; ShowModsPage(preview: true); }
+                if (what == "saves") { NavSaves.IsChecked = true; ShowSavesPage(preview: true); }
                 if (what == "home-building")
                 {
                     outPath = s.Folder;
