@@ -146,7 +146,7 @@ jobs:
         run: |
           python -I scripts/make_setup_parts.py "$RUNNER_TEMP/package" "$TAG" dist \
             --base "https://github.com/$GITHUB_REPOSITORY/releases/download/builder-parts" ${PREVIOUS:+--reuse "$PREVIOUS"}
-          cp "$RUNNER_TEMP/ReLink-Setup.exe" dist/ReLink-Setup.exe
+          cp "$RUNNER_TEMP/ReLink-Setup.exe" dist/RelinkAMD.exe   # (relink-amd: the one exe players download is RelinkAMD.exe)
           cat dist/relink-setup.txt
           ls -l dist
 
@@ -253,5 +253,5 @@ jobs:
           --parts dist --add recomplauncher.json
       - name: Setup and its list to the release
         run: >-
-          bash scripts/release_upload.sh "$GITHUB_REF_NAME" dist/ReLink-Setup.exe dist/relink-setup.txt
+          bash scripts/release_upload.sh "$GITHUB_REF_NAME" dist/RelinkAMD.exe dist/relink-setup.txt
           "dist/ProjectReLink-$GITHUB_REF_NAME-Windows-x64.zip"

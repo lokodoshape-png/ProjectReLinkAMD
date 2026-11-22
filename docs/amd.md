@@ -27,6 +27,12 @@ The log says what each start did:
 
 To go back to upstream's start entirely: `RX_VK_PREPARE_MB_PER_THREAD=0` and `RX_VK_WARM_PROBE_MS=12`.
 
+## The download: RelinkAMD.exe (0.7.9.5)
+
+The one exe a release offers is `RelinkAMD.exe` (upstream: `ReLink-Setup.exe`). It is the same setup; inside the installed folder
+its copy keeps the name `ReLink-Setup.exe`, which the builder's Repair runs. The launcher's updater looks for `RelinkAMD.exe` in
+the latest release (`launcher/Updater.cs`, `SetupAsset`), so a fork release must carry it under this name.
+
 ## What to report
 
 `relink_log.txt` from the game folder, with the card, the driver version and the `relink_env.txt` used.
