@@ -49,9 +49,23 @@ Everything the player reads is in Brazilian Portuguese when they choose it:
 Not translated: the log (`relink_log.txt`), the build tools' own error lines, and the game's text itself (the game has its own
 Portuguese: choose `pt-BR` as the game language).
 
+## The shader compile and frame profile (0.7.9.7)
+
+From the game's first start phase to its exit, every shader translation and every pipeline the driver compiles is timed, and in
+play every 120 frames are summed up. Three files go beside `relink_pipelines.bin` (the game's folder):
+
+| File | What it holds |
+|---|---|
+| `relink_shader_profile.txt` | The summary to read: per start phase (and per phase of the preparation at the build) how many translations, graphics and compute pipelines, their total time, median, p95, slowest, the share under 1 ms (from a cache), how many worker threads were busy on average, the 15 slowest; in play the 40 slowest compiles, how many were longer than a 60 fps frame, and per minute; then the frames: median fps, how many windows the GPU held and how many the CPU side held, and the 25 slowest windows with what held each (GPU, compiles or CPU). |
+| `relink_shader_profile.csv` | Every compile, one line each: seconds since the start, phase, kind, program key, ms, ok, thread. |
+| `relink_frame_profile.csv` | Every window of 120 frames in play: fps, p99 and worst frame, GPU ms, the replay's CPU ms, waits for shaders, draws, new pipelines and programs. |
+
+They are written at the end of the start, every 30 s in play and when the game closes. `RX_VK_COMPILE_PROFILE=0`: off.
+The log says where they go: `vk: the shader compile profile goes to ...`.
+
 ## What to report
 
-`relink_log.txt` from the game folder, with the card, the driver version and the `relink_env.txt` used.
+`relink_log.txt` and `relink_shader_profile.txt` (with the two .csv files) from the game folder, with the card, the driver version and the `relink_env.txt` used.
 
 ## Releases from main (0.7.9.5)
 

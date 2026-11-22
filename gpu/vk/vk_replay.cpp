@@ -28,6 +28,7 @@
 #include <unordered_set>
 
 #include "vk_dlss.h"
+#include "vk_compile_profile.h"   // (relink-amd: the frames of the shader compile profile)
 #include "status_line.h"
 #include "vk_reflex.h"
 #include "vk_draw.h"
@@ -3141,6 +3142,14 @@ uint64_t made_ring[32];
 int64_t made_ring_present = 0;
 void log_frame_stats() {
     log_slow_frame();
+    // (relink-amd) each frame's time, for the compile profile's windows of 120 (vk_compile_profile.h)
+    static std::vector<float> frame_ms;
+    static auto last_present = std::chrono::steady_clock::now();
+    {
+        const auto now = std::chrono::steady_clock::now();
+        frame_ms.push_back((float)std::chrono::duration<double, std::milli>(now - last_present).count());
+        last_present = now;
+    }
     made_ring[presents % 32] = texture_made();
     made_ring_present = presents;
     if (++fps_n == 120) {
@@ -3157,6 +3166,30 @@ void log_frame_stats() {
         int64_t pskip = 0, pwaits = 0;
         double pwait_ms = 0;
         draw_stats3(&pskip, &pwaits, &pwait_ms);
+        if (cprof::enabled()) {   // (relink-amd: this window in the compile profile)
+            compile_profile_start();
+            if (cprof::cur_phase.load() == 0) cprof::phase("in play");   // (no start phases ran: the game is played from here)
+            static int64_t c_gpu, c_d, c_pl, c_tr, c_prof;
+            static double c_wait;
+            int64_t prof_all = 0;
+            for (int i = 0; i < PROF_COUNT; i++) prof_all += prof_ns[i];
+            std::vector<float> sorted = frame_ms;
+            std::sort(sorted.begin(), sorted.end());
+            cprof::Window w{};
+            w.t_s = (float)cprof::now_s();
+            w.fps = (float)(120.0 / secs);
+            w.worst_ms = sorted.empty() ? 0 : sorted.back();
+            w.p99_ms = sorted.empty() ? 0 : sorted[std::min(sorted.size() - 1, (size_t)(0.99 * (sorted.size() - 1) + 0.5))];
+            w.gpu_ms = (float)((st_gpu_ns - c_gpu) / 120.0 / 1e6);
+            w.replay_ms = (float)((prof_all - c_prof) / 120.0 / 1e6);
+            w.wait_ms = (float)((pwait_ms - c_wait) / 120.0);
+            w.draws = (float)((d - c_d) / 120.0);
+            w.new_pipelines = (uint32_t)std::max<int64_t>(0, pl - c_pl);
+            w.new_programs = (uint32_t)std::max<int64_t>(0, tr - c_tr);
+            if (c_prof) cprof::frame_window(w);   // (the first window has no window before it to count from)
+            c_gpu = st_gpu_ns, c_d = d, c_pl = pl, c_tr = tr, c_prof = prof_all, c_wait = pwait_ms;
+        }
+        frame_ms.clear();
         static int64_t l_pskip, l_pwaits;
         static double l_pwait_ms;
         static int64_t l_reused;

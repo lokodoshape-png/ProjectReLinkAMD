@@ -357,6 +357,7 @@ void precompile_run(void (*progress)(size_t done, size_t total));
 /// (relink-amd, vk_draw.cpp) the RAM free now in MB (0: not known), and a log line of it for a phase of the start
 uint64_t ram_available_mb();
 void log_phase_ram(const char* what);
+void compile_profile_start();   // (relink-amd: vk_compile_profile.h)
 bool prepare_run(void (*progress)(size_t done, size_t total), bool background);
 bool prepare_is_update();
 void prepare_background();
