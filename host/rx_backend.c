@@ -3,6 +3,7 @@
    executable. Decided at rx_start, before any other rx_* call; a DLL that is missing or finds no usable Vulkan
    device leaves the WebGPU renderer in place (logged). */
 #include "hos.h"
+#include "hos_lang.h"   /* (relink-amd: the boxes in Portuguese) */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -272,10 +273,13 @@ static const MkwVkRenderer *load_vulkan(const char *dll) {
         if (!preparing_shaders && !getenv("HOS_HEADLESS") && strcmp(dll, "relink_vk.dll") == 0) {
             char text[MAX_PATH + 512];
             snprintf(text, sizeof text,
-                     "ReLink's renderer could not be loaded:\n\n%s\n(Windows error %lu)\n\nThe window would stay black. Start the "
+                     HOS_T("ReLink's renderer could not be loaded:\n\n%s\n(Windows error %lu)\n\nThe window would stay black. Start the "
                      "game from ReLink (the launcher), not from a copy of relink-game.exe elsewhere; if it still happens, use "
-                     "Update in ReLink, or install the game again from it.", path, err);
-            MessageBoxA(NULL, text, "Project ReLink", MB_OK | MB_ICONERROR | MB_SETFOREGROUND);
+                     "Update in ReLink, or install the game again from it.",
+                     "O renderizador do ReLink não pôde ser carregado:\n\n%s\n(erro do Windows %lu)\n\nA janela ficaria preta. Abra o "
+                     "jogo pelo ReLink (o launcher), não por uma cópia do relink-game.exe em outro lugar; se ainda acontecer, use "
+                     "Atualizar no ReLink, ou instale o jogo de novo por ele."), path, err);
+            hos_box(text, "Project ReLink", MB_OK | MB_ICONERROR | MB_SETFOREGROUND);
         }
 #endif
         return NULL;

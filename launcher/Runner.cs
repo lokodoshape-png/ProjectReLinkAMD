@@ -124,11 +124,11 @@ sealed class Runner
                 }
                 p.WaitForExit();
                 Finished?.Invoke(cancelled ? "cancelled" : p.ExitCode == 0 ? null
-                    : error ?? L("Les outils se sont arrêtés sans dire pourquoi. Voir les détails.", "The build tools stopped without saying why. See the details."));
+                    : error ?? L("Les outils se sont arrêtés sans dire pourquoi. Voir les détails.", "The build tools stopped without saying why. See the details.", "As ferramentas de compilação pararam sem dizer por quê. Veja os detalhes."));
             }
             catch (Exception e)
             {
-                Finished?.Invoke(L("Les outils n'ont pas pu démarrer : ", "The build tools could not start: ") + e.Message);
+                Finished?.Invoke(L("Les outils n'ont pas pu démarrer : ", "The build tools could not start: ", "As ferramentas de compilação não conseguiram iniciar: ") + e.Message);
             }
         });
     }
@@ -148,7 +148,7 @@ sealed class Runner
             string? lastError = null;
             p.ErrorDataReceived += (_, e) => { if (!string.IsNullOrWhiteSpace(e.Data)) lastError = e.Data; };
             p.BeginErrorReadLine();
-            var result = (false, L("Les fichiers du jeu n'ont pas pu être lus.", "The game files could not be read."));
+            var result = (false, L("Les fichiers du jeu n'ont pas pu être lus.", "The game files could not be read.", "Não foi possível ler os arquivos do jogo."));
             var answered = false;
             while (await p.StandardOutput.ReadLineAsync() is { } line)
             {
@@ -162,8 +162,8 @@ sealed class Runner
             {
                 if (lastError != null && lastError.Contains("Microsoft Store", StringComparison.OrdinalIgnoreCase))
                     return (false, L("Python 3 est introuvable : la commande « python » de ce PC n'ouvre que le Microsoft Store. Installez ReLink avec ReLink-Setup.exe, qui apporte le sien.",
-                                     "Python 3 was not found: the 'python' command on this PC only opens the Microsoft Store. Install ReLink with ReLink-Setup.exe, which brings its own."));
-                return (false, lastError ?? L($"Les outils se sont arrêtés sans dire pourquoi (code {p.ExitCode}).", $"The game tools stopped without saying why (exit code {p.ExitCode})."));
+                                     "Python 3 was not found: the 'python' command on this PC only opens the Microsoft Store. Install ReLink with ReLink-Setup.exe, which brings its own.", "O Python 3 não foi encontrado: o comando 'python' neste PC só abre a Microsoft Store. Instale o ReLink com o ReLink-Setup.exe, que traz o próprio Python."));
+                return (false, lastError ?? L($"Les outils se sont arrêtés sans dire pourquoi (code {p.ExitCode}).", $"The game tools stopped without saying why (exit code {p.ExitCode}).", $"As ferramentas do jogo pararam sem dizer por quê (código de saída {p.ExitCode})."));
             }
             return result;
         }
@@ -172,9 +172,9 @@ sealed class Runner
             // (the package's own Python missing: an antivirus took it, most often, after a false alarm on the download)
             if (tools.Python == "python" && Directory.Exists(Path.Combine(tools.Root, "python")))
                 return (false, L("Le Python de ReLink (tools/python/python.exe) a disparu. Votre antivirus l'a sans doute retiré : restaurez-le depuis la quarantaine, puis réessayez.",
-                                 "ReLink's own Python (tools/python/python.exe) is missing. Your antivirus probably removed it: restore it from quarantine, then try again."));
+                                 "ReLink's own Python (tools/python/python.exe) is missing. Your antivirus probably removed it: restore it from quarantine, then try again.", "O Python do próprio ReLink (tools/python/python.exe) está faltando. O seu antivírus provavelmente o removeu: restaure da quarentena e tente de novo."));
             return (false, L("Python 3 est introuvable. Installez ReLink avec ReLink-Setup.exe, qui apporte le sien.",
-                             "Python 3 was not found. Install ReLink with ReLink-Setup.exe, which brings its own."));
+                             "Python 3 was not found. Install ReLink with ReLink-Setup.exe, which brings its own.", "O Python 3 não foi encontrado. Instale o ReLink com o ReLink-Setup.exe, que traz o próprio Python."));
         }
     }
 }

@@ -5,13 +5,13 @@
   "repo": "lokodoshape-png/ProjectReLinkAMD",
   "game": {
     "kind": "iso_or_folder",
-    "label": "Your copy of The Legend of Zelda: Ocarina of Time for Nintendo Switch 2, with its update installed (program 0400486024DEC000, update v131072, build e0f3ccfa): its .nup file, or a folder holding its exefs and romfs folders. Other versions do not work.",
+    "label": "A sua cópia de The Legend of Zelda: Ocarina of Time para Nintendo Switch 2, com a atualização instalada (programa 0400486024DEC000, atualização v131072, build e0f3ccfa): o arquivo .nup dela, ou uma pasta com as pastas exefs e romfs. Outras versões não funcionam.",
     "check": { "nup_build_id": "e0f3ccfa" }
   },
   "prepare": {
     "program": ["tools/python/python.exe"],
     "args": ["-I", "{install}/tools/nx2/make_game.py", "--game", "{game}", "--out", "{install}/game", "--progress-lines"],
-    "label": "Building the game on your PC from your copy: 10 to 45 minutes, and about 60 GB free while it runs",
+    "label": "Montando o jogo no seu PC a partir da sua cópia: de 10 a 45 minutos, e cerca de 60 GB livres enquanto roda",
     "timeout": 14400
   },
   "start": {
@@ -39,88 +39,88 @@
   "looks": { "graphics": "vulkan" },
   "settings": [
     {
-      "id": "fullscreen", "label": "Full screen", "group": "Display",
-      "help": "Fills the whole screen with the game, without the window's border. F11 switches it in the game.",
+      "id": "fullscreen", "label": "Tela cheia", "group": "Tela",
+      "help": "Preenche a tela inteira com o jogo, sem a borda da janela. F11 alterna isso no jogo.",
       "choices": [
-        { "label": "On", "set": { "fullscreen": "1" } },
-        { "label": "Off", "set": { "fullscreen": "0" } }
+        { "label": "Ligado", "set": { "fullscreen": "1" } },
+        { "label": "Desligado", "set": { "fullscreen": "0" } }
       ],
       "defaults": { "fullscreen": "0" }
     },
     {
-      "id": "resolution", "label": "Render resolution", "group": "Display",
-      "help": "The share of the picture the 3D is drawn at. Lower runs faster on a slower graphics card; the HUD stays sharp.",
+      "id": "resolution", "label": "Resolução de renderização", "group": "Tela",
+      "help": "A parte da imagem em que o 3D é desenhado. Menor roda mais rápido numa placa de vídeo mais fraca; o HUD continua nítido.",
       "choices": [
-        { "label": "100 % (native)", "set": { "resolution": "1" } },
+        { "label": "100 % (nativa)", "set": { "resolution": "1" } },
         { "label": "75 %", "set": { "resolution": "2" } },
         { "label": "67 %", "set": { "resolution": "3" } },
         { "label": "50 %", "set": { "resolution": "4" } },
-        { "label": "Auto (dynamic)", "set": { "resolution": "0" } }
+        { "label": "Auto (dinâmica)", "set": { "resolution": "0" } }
       ],
       "defaults": { "resolution": "1" }
     },
     {
-      "id": "filter", "label": "Window scaling filter", "group": "Display",
-      "help": "How the finished picture is scaled to the window when their sizes differ.",
+      "id": "filter", "label": "Filtro de escala da janela", "group": "Tela",
+      "help": "Como a imagem pronta é escalada para a janela quando os tamanhos são diferentes.",
       "choices": [
-        { "label": "Off", "set": { "upscaling": "0" } },
+        { "label": "Desligado", "set": { "upscaling": "0" } },
         { "label": "Catmull-Rom", "set": { "upscaling": "1" } },
         { "label": "Lanczos", "set": { "upscaling": "2" } }
       ],
       "defaults": { "upscaling": "0" }
     },
     {
-      "id": "sharpness", "label": "Sharpness", "group": "Display",
-      "help": "Sharpens the picture as it goes to the window. Too much shows halos around edges.",
+      "id": "sharpness", "label": "Nitidez", "group": "Tela",
+      "help": "Deixa a imagem mais nítida ao ir para a janela. Demais mostra halos em volta das bordas.",
       "slider": { "key": "sharpness", "min": 0, "max": 100, "step": 10, "format": "%d" },
       "defaults": { "sharpness": "0" }
     },
     {
-      "id": "ultrawide", "label": "Ultrawide", "group": "Display",
-      "help": "The camera's shape on a screen wider than 16:9.",
+      "id": "ultrawide", "label": "Ultrawide", "group": "Tela",
+      "help": "O formato da câmera numa tela mais larga que 16:9.",
       "choices": [
         { "label": "16:9", "set": { "ultrawide": "0" } },
-        { "label": "Monitor's shape", "set": { "ultrawide": "1" } }
+        { "label": "Formato do monitor", "set": { "ultrawide": "1" } }
       ],
       "defaults": { "ultrawide": "0" }
     },
     {
-      "id": "frame_rate", "label": "Frame rate", "group": "Smoothness", "in": "env",
-      "help": "60 is the game's own rate. Unlocked goes up to your display's refresh; the game keeps time by the clock, so it plays at the same speed. 30, smooth is for PCs that do not hold 60: every frame stays on screen for the same time.",
+      "id": "frame_rate", "label": "Taxa de quadros", "group": "Fluidez", "in": "env",
+      "help": "60 é a taxa do próprio jogo. Desbloqueado vai até a taxa de atualização da sua tela; o jogo conta o tempo pelo relógio, então joga na mesma velocidade. 30, suave é para PCs que não seguram 60: cada quadro fica na tela pelo mesmo tempo.",
       "choices": [
         { "label": "60", "set": { "HOS_FPS_UNLOCKED": "0", "HOS_FPS_CAP": "0" } },
-        { "label": "Unlocked", "set": { "HOS_FPS_UNLOCKED": "1", "HOS_FPS_CAP": "0" } },
-        { "label": "30, smooth", "set": { "HOS_FPS_UNLOCKED": "0", "HOS_FPS_CAP": "30" } }
+        { "label": "Desbloqueado", "set": { "HOS_FPS_UNLOCKED": "1", "HOS_FPS_CAP": "0" } },
+        { "label": "30, suave", "set": { "HOS_FPS_UNLOCKED": "0", "HOS_FPS_CAP": "30" } }
       ],
       "defaults": { "HOS_FPS_UNLOCKED": "0", "HOS_FPS_CAP": "0" }
     },
     {
-      "id": "v-sync", "label": "V-Sync", "group": "Smoothness",
-      "help": "Shows each frame in step with the display's refresh, so the picture never tears. For cards whose driver has no mailbox mode (AMD and Intel on Windows).",
+      "id": "v-sync", "label": "V-Sync", "group": "Fluidez",
+      "help": "Mostra cada quadro sincronizado com a atualização da tela, então a imagem nunca rasga. Para placas cujo driver não tem o modo mailbox (AMD e Intel no Windows).",
       "choices": [
-        { "label": "Off", "set": { "v-sync": "0" } },
-        { "label": "On", "set": { "v-sync": "1" } }
+        { "label": "Desligado", "set": { "v-sync": "0" } },
+        { "label": "Ligado", "set": { "v-sync": "1" } }
       ],
       "defaults": { "v-sync": "0" }
     },
     {
-      "id": "lossless_scaling", "label": "Lossless Scaling", "group": "Smoothness",
-      "help": "Prepares the picture for the Lossless Scaling app over the game. LSFG: no frames made by the game itself, each frame shown once. Your other settings are kept and come back with Off.",
+      "id": "lossless_scaling", "label": "Lossless Scaling", "group": "Fluidez",
+      "help": "Prepara a imagem para o app Lossless Scaling por cima do jogo. LSFG: nenhum quadro gerado pelo próprio jogo, cada quadro mostrado uma vez. As suas outras configurações ficam guardadas e voltam com Desligado.",
       "choices": [
-        { "label": "Off", "set": { "lossless_scaling": "0" } },
-        { "label": "LS Scaling", "set": { "lossless_scaling": "1" } },
+        { "label": "Desligado", "set": { "lossless_scaling": "0" } },
+        { "label": "LS Escala", "set": { "lossless_scaling": "1" } },
         { "label": "LSFG", "set": { "lossless_scaling": "2" } },
-        { "label": "LSFG + Scaling", "set": { "lossless_scaling": "3" } },
-        { "label": "LS Performance", "set": { "lossless_scaling": "4" } },
-        { "label": "LS Max Compatibility", "set": { "lossless_scaling": "5" } }
+        { "label": "LSFG + Escala", "set": { "lossless_scaling": "3" } },
+        { "label": "LS Desempenho", "set": { "lossless_scaling": "4" } },
+        { "label": "LS Compatibilidade máx.", "set": { "lossless_scaling": "5" } }
       ],
       "defaults": { "lossless_scaling": "0" }
     },
     {
-      "id": "frame_generation", "label": "Frame generation", "group": "Smoothness",
-      "help": "Makes frames between the game's own, for smoother motion, at a little input delay. Fast motion or camera cuts can show artifacts.",
+      "id": "frame_generation", "label": "Geração de quadros", "group": "Fluidez",
+      "help": "Cria quadros entre os do próprio jogo, para um movimento mais suave, com um pouco de atraso nos comandos. Movimentos rápidos ou cortes de câmera podem mostrar falhas.",
       "choices": [
-        { "label": "Off", "set": { "frame_generation": "0" } },
+        { "label": "Desligado", "set": { "frame_generation": "0" } },
         { "label": "2x", "set": { "frame_generation": "2" } },
         { "label": "3x", "set": { "frame_generation": "3" } },
         { "label": "4x", "set": { "frame_generation": "4" } }
@@ -128,38 +128,38 @@
       "defaults": { "frame_generation": "0" }
     },
     {
-      "id": "fps_counter", "label": "FPS counter", "group": "Smoothness",
-      "help": "Frames per second in the top right corner of the game.",
+      "id": "fps_counter", "label": "Contador de FPS", "group": "Fluidez",
+      "help": "Quadros por segundo no canto superior direito do jogo.",
       "choices": [
-        { "label": "Off", "set": { "fps_counter": "0" } },
-        { "label": "On", "set": { "fps_counter": "1" } }
+        { "label": "Desligado", "set": { "fps_counter": "0" } },
+        { "label": "Ligado", "set": { "fps_counter": "1" } }
       ],
       "defaults": { "fps_counter": "0" }
     },
     {
-      "id": "text_speed", "label": "Text speed", "group": "Gameplay",
-      "help": "How fast the letters of dialogue and other messages appear.",
+      "id": "text_speed", "label": "Velocidade do texto", "group": "Jogabilidade",
+      "help": "A rapidez com que as letras dos diálogos e de outras mensagens aparecem.",
       "choices": [
         { "label": "Normal", "set": { "text_speed": "0" } },
         { "label": "2x", "set": { "text_speed": "1" } },
         { "label": "4x", "set": { "text_speed": "2" } },
-        { "label": "Instant", "set": { "text_speed": "3" } }
+        { "label": "Instantâneo", "set": { "text_speed": "3" } }
       ],
       "defaults": { "text_speed": "0" }
     },
     {
-      "id": "audio_output", "label": "Audio output", "group": "Gameplay",
-      "help": "The speakers the game mixes its sound for. If the game has no sound, try Stereo.",
+      "id": "audio_output", "label": "Saída de áudio", "group": "Jogabilidade",
+      "help": "Os alto-falantes para os quais o jogo mixa o som. Se o jogo ficar sem som, tente Estéreo.",
       "choices": [
         { "label": "Auto", "set": { "audio_output": "0" } },
-        { "label": "Stereo", "set": { "audio_output": "1" } },
+        { "label": "Estéreo", "set": { "audio_output": "1" } },
         { "label": "5.1", "set": { "audio_output": "2" } }
       ],
       "defaults": { "audio_output": "0" }
     }
   ],
   "actions": [
-    { "id": "saves", "label": "Saves", "help": "Your save files.", "open": "saves" },
-    { "id": "mods", "label": "Mods", "help": "RomFS mods go here, each in its own folder: mods\\<name>\\romfs\\...", "open": "mods" }
+    { "id": "saves", "label": "Saves", "help": "Os seus arquivos de save.", "open": "saves" },
+    { "id": "mods", "label": "Mods", "help": "Os mods de RomFS ficam aqui, cada um na própria pasta: mods\\<nome>\\romfs\\...", "open": "mods" }
   ]
 }

@@ -35,6 +35,7 @@
 #include "vk_paths.h"
 #include "vk_menu.h"
 #include "vk_menu_hit.h"
+#include "menu_lang.h"   // (relink-amd: the menu in Portuguese; redirects TextOutA and GetTextExtentPoint32A)
 #include "vk_draw.h"   // (pipeline_cache_save: Restart now keeps what was built)
 #include "oot_cheat_items.h"
 #include "oot_teleport_capture.h"   // (relink: the Travel page's pictures)
@@ -216,7 +217,7 @@ const char* tx_dlss_model(int v) {
     if (const char* e = dlss_preset_env()) {
         static char b[48];
         const unsigned p = ur::dlss_preset(v, e);
-        if (p) snprintf(b, sizeof b, "Preset %c (RX_VK_DLSS_PRESET)", ur::preset_letter(p));
+        if (p) snprintf(b, sizeof b, menu_lang::tr("Preset %c (RX_VK_DLSS_PRESET)"), ur::preset_letter(p));
         else snprintf(b, sizeof b, "NVIDIA default (RX_VK_DLSS_PRESET)");
         return b;
     }
@@ -331,7 +332,7 @@ const char* tx_output_res(int v) {
     static char b[32];
     v = output_choice(v);
     const Out o = kOutputs[v];
-    snprintf(b, sizeof b, "%ux%u%s", o.w, o.h, v ? "" : " (game's)");
+    snprintf(b, sizeof b, "%ux%u%s", o.w, o.h, v ? "" : menu_lang::tr(" (game's)"));
     return b;
 }
 const char* tx_speed(int v) { return v ? "Real time" : "Per frame"; }
@@ -350,7 +351,7 @@ const char* tx_gpu(int v) {
     const int idx = v - 1;
     if (v <= 0) snprintf(buf, sizeof buf, "Auto");
     else if (idx < (int)gpu_device_names.size()) snprintf(buf, sizeof buf, "%d: %s", idx, gpu_device_names[idx].c_str());
-    else snprintf(buf, sizeof buf, "%d: Device %d", idx, idx);
+    else snprintf(buf, sizeof buf, menu_lang::tr("%d: Device %d"), idx, idx);
     // (a name too long for its row is cut short in it: paint_options)
     return buf;
 }
@@ -379,7 +380,7 @@ const char* tx_mic(int v) {
     if (v <= 0) return "Off";
     if (v == 1) return "Default";
     if (mic_missing && v == 2 + mic_listed) {
-        snprintf(buf, sizeof buf, "%s (not connected)", mic_want.c_str());
+        snprintf(buf, sizeof buf, menu_lang::tr("%s (not connected)"), mic_want.c_str());
         return buf;
     }
     const char* n = can_mic() ? host->mic_name(v - 2) : "";
@@ -464,8 +465,8 @@ const char* hn_framegen(int v, int variant) {
     if (variant > 0 || v == 1) return nullptr;
     if (v <= 0) return "Only the game's own frames: no added delay.";
     static char b[9][96];
-    snprintf(b[v], sizeof b[v], "%s between each two of the game's.", v == 2 ? "One made frame" : v == 3 ? "Two made frames" : v == 4 ? "Three made frames"
-             : v == 5 ? "Four made frames" : v == 6 ? "Five made frames" : v == 7 ? "Six made frames" : "Seven made frames");
+    snprintf(b[v], sizeof b[v], menu_lang::tr("%s between each two of the game's."), menu_lang::tr(v == 2 ? "One made frame" : v == 3 ? "Two made frames" : v == 4 ? "Three made frames"
+             : v == 5 ? "Four made frames" : v == 6 ? "Five made frames" : v == 7 ? "Six made frames" : "Seven made frames"));
     return b[std::clamp(v, 2, 8)];
 }
 // (relink-amd) the Lossless Scaling row (ls_compat.h, docs/lossless_scaling.md)
@@ -809,8 +810,14 @@ bool restart_ask() {
     restart_values(now);
     return app_window() && restart_state.ask(now);
 }
+/// (relink-amd) The rows' names in the menu's language, for the lines that list them
+const char* const* restart_names_said() {
+    static const char* said[mr::kMax];
+    for (int i = 0; i < restart_state.n; i++) said[i] = menu_lang::tr(restart_names[i]);
+    return said;
+}
 std::string restart_list(const char* last) {
-    return mr::names(restart_names, restart_state.n, restart_pending(), ", ", last);
+    return mr::names(restart_names_said(), restart_state.n, restart_pending(), ", ", menu_lang::tr(last));
 }
 int ask_sel = 0;   // (the restart question's choice: 0 Later, 1 Restart now)
 bool ask_quit = false;   // (page 5 asks Quit game's question instead: 0 Back, 1 Quit)
@@ -823,8 +830,9 @@ std::string restart_line(HDC dc, int width) {
         int named = 0, more = 0;
         for (int i = 0; i < restart_state.n; i++)
             if ((all >> i) & 1) (named < keep ? (shown |= 1u << i, named++) : more++);
-        line = "Restart needed: " + mr::names(restart_names, restart_state.n, shown);
-        if (more) line += (named ? " and " : "") + std::to_string(more) + (named ? " more" : more > 1 ? " settings" : " setting");
+        line = menu_lang::tr(std::string("Restart needed: ")) + mr::names(restart_names_said(), restart_state.n, shown);
+        if (more) line += (named ? menu_lang::tr(" and ") : "") + std::to_string(more) +
+                          menu_lang::tr(named ? " more" : more > 1 ? " settings" : " setting");
         SIZE sz{};
         GetTextExtentPoint32A(dc, line.c_str(), (int)line.size(), &sz);
         if (sz.cx <= width) break;
@@ -1167,7 +1175,7 @@ const char* key_name(int vk) {
     case 0x05: return "Mouse 4";   // (VK_XBUTTON1)
     case 0x06: return "Mouse 5";
     }
-    return snprintf(b, sizeof b, "Key %d", vk), b;
+    return snprintf(b, sizeof b, menu_lang::tr("Key %d"), vk), b;
 }
 // the keys a binding can take (Esc cancels, Insert and F1 are the menu's, Delete clears)
 const std::vector<int>& bindable_keys() {
@@ -1293,6 +1301,8 @@ HFONT font(int px, int weight) {
 /// The help text word-wrapped to width, a TextOutA a line (the POSIX GDI stand-in has no DrawTextA), drawn at (x, y)
 /// when draw: its height in pixels either way
 int wrap_help(HDC dc, const char* text, int width, int x, int y, bool draw) {
+    text = menu_lang::tr(text);   // (relink-amd: the whole text in the menu's language, then its pieces as they are)
+    const menu_lang::Pieces pieces;
     SIZE sz{};
     GetTextExtentPoint32A(dc, "Ag", 2, &sz);
     const int line_h = (int)sz.cy;
@@ -1537,7 +1547,7 @@ void picture_worker() {
             }
             logf("menu: Travel picture of %s (%s) taken (%d in memory)%s", place.label, place.key, count, saved ? "" : "; not saved");
             if (saved) {   // (the line over the game for 2.5 s)
-                snprintf(notice_text, sizeof notice_text, "Travel picture saved: %s", place.label);
+                snprintf(notice_text, sizeof notice_text, menu_lang::tr("Travel picture saved: %s"), menu_lang::tr(place.label));
                 notice_new.store(true, std::memory_order_release);
                 notice_until.store(prof_now() + 2500000000LL, std::memory_order_relaxed);
             }
@@ -1800,7 +1810,7 @@ void paint_options(HDC dc, uint32_t w, uint32_t h) {
     if (pending) {
         startup_gdi::round_rect(dc, lx + P(12), pend_top + P(3), lw - P(24), P(kOptPendH) - P(8), P(8), kTag);
         SetTextColor(dc, RGB(0x6B, 0x52, 0x0C));
-        const std::string line = restart_line(dc, lw - P(48)) + " (when the menu closes)";
+        const std::string line = restart_line(dc, lw - P(48)) + menu_lang::tr(" (when the menu closes)");
         TextOutA(dc, lx + P(24), pend_top + P(3) + (P(kOptPendH) - P(8) - text_h(dc)) / 2, line.c_str(), (int)line.size());
     }
     // the rows
@@ -1916,12 +1926,12 @@ void paint_options(HDC dc, uint32_t w, uint32_t h) {
             startup_gdi::round_rect(dc, knob_x - kd / 2 + P(2), mid - kd / 2 + P(2), kd - P(4), kd - P(4), (kd - P(4)) / 2, look.strip);
             opt_hit.track_l[k] = tl, opt_hit.track_r[k] = tr, opt_hit.value_l[k] = tl - P(8);
         } else {   // (a list: its value; the selected row's in a pill between two arrows)
-            std::string t = row_text(r, *r.value);
+            std::string t = menu_lang::tr(row_text(r, *r.value));   // (relink-amd: cut short in the words it is drawn in)
             const bool fixed = row_fixed(r.value);
             if (on && !fixed) {
                 SelectObject(dc, chip_b);
                 const int room_w = vr - after - P(70);
-                while (t.size() > 4 && text_w(dc, t) > room_w) t.pop_back();
+                while (t.size() > 4 && text_w(dc, t) > room_w) menu_lang::pop_letter(t);
                 const int pw = text_w(dc, t) + P(24), ph = P(24), px = vr - P(16) - pw;
                 const bool output_row = r.value == &opts.output_res;
                 const bool can_l = !output_row || step_output_choice(*r.value, -1) != *r.value;
@@ -1936,7 +1946,7 @@ void paint_options(HDC dc, uint32_t w, uint32_t h) {
                 SelectObject(dc, value_f);
                 const int room_w = vr - after - P(16);
                 if (text_w(dc, t) > room_w) {
-                    while (t.size() > 1 && text_w(dc, t + "...") > room_w) t.pop_back();
+                    while (t.size() > 1 && text_w(dc, t + "...") > room_w) menu_lang::pop_letter(t);
                     t += "...";
                 }
                 SetTextColor(dc, fixed ? kFaint : kSoft);
@@ -2176,7 +2186,7 @@ void paint_cheats(HDC dc, uint32_t w, uint32_t h) {
         startup_gdi::round_rect(dc, body_l + P(6), help_top + P(12), P(3), cheat_help_box - P(20), P(1.5f), look.strip);
         SelectObject(dc, done ? name_b : help_f);
         SetTextColor(dc, done ? look.strip : kHelp);
-        const std::string text = done ? "Done: " + cheat_done : cheat_help[cheat_selected];
+        const std::string text = done ? menu_lang::tr(std::string("Done: ")) + cheat_done : std::string(menu_lang::tr(cheat_help[cheat_selected]));
         wrap_help(dc, text.c_str(), body_r - body_l - P(30), body_l + P(18), help_top + P(10), true);
     }
     // the buttons: what A does on this row, the arrows where they change it, Back
@@ -2271,10 +2281,10 @@ void paint_list(HDC dc, uint32_t w, uint32_t h, bool inv) {
     TextOutA(dc, lx + P(14), ly + (P(kOptTabH) - text_h(dc)) / 2, title, (int)strlen(title));
     SelectObject(dc, small);
     SetTextColor(dc, kFaint);
-    const std::string from = std::string("Cheats  >  ") + title;
+    const std::string from = menu_lang::tr(std::string("Cheats  >  ")) + menu_lang::tr(title);
     TextOutA(dc, lx + sw + P(12), ly + (P(kOptTabH) - text_h(dc)) / 2, from.c_str(), (int)from.size());
     char count[32];
-    snprintf(count, sizeof count, "%d of %d", choice + 1, n);
+    snprintf(count, sizeof count, menu_lang::tr("%d of %d"), choice + 1, n);
     TextOutA(dc, lx + lw - P(16) - text_w(dc, count), ly + (P(kOptTabH) - text_h(dc)) / 2, count, (int)strlen(count));
     // the lines: a heading for each section, then its items
     const int foot_top = ly + lh - P(kOptFootH), help_top = foot_top - list_help_box;
@@ -2500,7 +2510,7 @@ void paint_travel_cart(HDC dc, uint32_t w, uint32_t h) {
     int with = 0;
     for (int i = 0; i < n; i++) with += travel_has_picture(travel.place[i]);
     char count[64];
-    snprintf(count, sizeof count, "%d of %d  \xB7  %d with pictures", n ? travel_choice + 1 : 0, n, with);
+    snprintf(count, sizeof count, menu_lang::tr("%d of %d  \xB7  %d with pictures"), n ? travel_choice + 1 : 0, n, with);
     SelectObject(dc, small);
     SetTextColor(dc, kFaint);
     TextOutA(dc, lx + lw - P(16) - text_w(dc, count), mid_top - text_h(dc) / 2, count, (int)strlen(count));
@@ -2546,10 +2556,10 @@ void paint_travel_cart(HDC dc, uint32_t w, uint32_t h) {
         const char* label = oot_tp_places[travel.place[i]].label;
         SelectObject(dc, on ? name_b : name_f);
         SetTextColor(dc, kInk);
-        std::string t = label;
+        std::string t = menu_lang::tr(label);
         const int room_w = list_r - body_l - P(46);
         if (text_w(dc, t) > room_w) {
-            while (t.size() > 1 && text_w(dc, t + "...") > room_w) t.pop_back();
+            while (t.size() > 1 && text_w(dc, t + "...") > room_w) menu_lang::pop_letter(t);
             t += "...";
         }
         TextOutA(dc, body_l + P(12), mid - text_h(dc) / 2, t.c_str(), (int)t.size());
@@ -2602,7 +2612,7 @@ void paint_travel_cart(HDC dc, uint32_t w, uint32_t h) {
             if (a.first <= travel_choice) area = a.name;
         char where[128];
         const bool other = link_age.load(std::memory_order_relaxed) >= 0 && link_age.load(std::memory_order_relaxed) != travel.adult;
-        snprintf(where, sizeof where, "%s  \xB7  %s%s", area, travel.adult ? "adult" : "child", other ? ": Link becomes that age" : "");
+        snprintf(where, sizeof where, "%s  \xB7  %s%s", menu_lang::tr(area), menu_lang::tr(travel.adult ? "adult" : "child"), other ? menu_lang::tr(": Link becomes that age") : "");
         SelectObject(dc, help_f);
         SetTextColor(dc, kSoft);
         TextOutA(dc, cl, ty, where, (int)strlen(where));
@@ -2714,7 +2724,7 @@ void paint_controls_cart(HDC dc, uint32_t w, uint32_t h) {
     SetTextColor(dc, kFaint);
     const char* from = "Controls  >  Buttons";
     TextOutA(dc, lx + sw + P(12), mid_top - text_h(dc) / 2, from, (int)strlen(from));
-    const std::string layout = std::string("Layout: ") + tx_pad_layout(opts.pad_layout);
+    const std::string layout = menu_lang::tr(std::string("Layout: ")) + menu_lang::tr(tx_pad_layout(opts.pad_layout));
     TextOutA(dc, lx + lw - P(16) - text_w(dc, layout), mid_top - text_h(dc) / 2, layout.c_str(), (int)layout.size());
     // the columns' names
     const int body_l = lx + P(10), body_r = lx + lw - P(10), pad_x = lx + P(kCtlPadX), key_x = lx + P(kCtlKeyX);
@@ -2812,8 +2822,8 @@ void paint_controls_cart(HDC dc, uint32_t w, uint32_t h) {
         SelectObject(dc, listening ? name_b : help_f);
         SetTextColor(dc, kHelp);
         std::string text;
-        if (listening) text = std::string(listening == 1 ? "Press the gamepad button" : "Press the key") + " for " + controls[csel].name +
-                              " now. Esc cancels; it stops by itself after a few seconds.";
+        if (listening) text = std::string(menu_lang::tr(listening == 1 ? "Press the gamepad button" : "Press the key")) + menu_lang::tr(" for ") +
+                              menu_lang::tr(controls[csel].name) + menu_lang::tr(" now. Esc cancels; it stops by itself after a few seconds.");
         else if (csel == kControls) text = "Puts every gamepad button back as the Layout preset has them.";
         else if (keys_only(csel)) text = "The keyboard's key for this one (the gamepad's stick does it there). Enter binds a new key; Delete clears it.";
         else text = "Enter binds a new one in the chosen column: press the button or the key. Delete clears it. Left and Right change the column.";
@@ -2902,7 +2912,7 @@ void paint_menu(HDC dc, uint32_t w, uint32_t h, int s) {
     SelectObject(dc, body);
     if (page == 5) {   // (relink) the restart question, as the menu closes with a setting that takes a restart, or Quit game's
         SetTextColor(dc, cart::kInk);
-        const std::string ask = ask_quit ? std::string("Quit the game?") : "Restart to apply " + restart_list(" and ") + "?";
+        const std::string ask = ask_quit ? std::string("Quit the game?") : menu_lang::tr(std::string("Restart to apply ")) + restart_list(" and ") + "?";
         const int asked = wrap_help(dc, ask.c_str(), (int)w - 32 * s, 16 * s, 46 * s, true);   // (one line or two)
         HFONT small = font(14 * s, FW_NORMAL);
         SelectObject(dc, small);
@@ -3308,8 +3318,8 @@ void menu_store_screenshot(std::vector<uint8_t>&& rgba, uint32_t w, uint32_t h) 
         const size_t slash = path.find_last_of("\\/");
         const std::string name = slash == std::string::npos ? path : path.substr(slash + 1);
         logf("menu: screenshot %ux%u %s%s (%.0f ms)", w, h, saved ? "written to " : "NOT written: ", path.empty() ? "no game folder" : path.c_str(), ms);
-        if (saved) snprintf(notice_text, sizeof notice_text, "Screenshot saved: screenshots\\%s", name.c_str());
-        else snprintf(notice_text, sizeof notice_text, "The screenshot could not be saved");
+        if (saved) snprintf(notice_text, sizeof notice_text, menu_lang::tr("Screenshot saved: screenshots\\%s"), name.c_str());
+        else snprintf(notice_text, sizeof notice_text, "%s", menu_lang::tr("The screenshot could not be saved"));
         notice_new.store(true, std::memory_order_release);
         notice_until.store(prof_now() + 2500000000LL, std::memory_order_relaxed);
     }).detach();
@@ -3737,15 +3747,15 @@ void menu_tick() {
             if (press[7] && cheat_selected >= 2 && cheat_selected <= 4) {
                 cheat_action.store(cheat_selected == 4 ? 100 + clock_hour : cheat_selected);
                 char said[48];
-                snprintf(said, sizeof said, "the clock is set to %02d:00.", clock_hour);
-                cheat_say(cheat_selected == 2 ? "Link's position is marked." : cheat_selected == 3 ? "Link goes back to the mark." : said);
+                snprintf(said, sizeof said, menu_lang::tr("the clock is set to %02d:00."), clock_hour);
+                cheat_say(cheat_selected == 2 ? menu_lang::tr("Link's position is marked.") : cheat_selected == 3 ? menu_lang::tr("Link goes back to the mark.") : said);
                 changed = true;
             }
             if (press[7] && cheat_selected == 6) {
                 cheat_action.store(200 + pouch_item * 32 + pouch_delta + 10);
                 char said[64];
-                snprintf(said, sizeof said, "%s %d %s.", pouch_delta > 0 ? "gave" : "took", pouch_delta > 0 ? pouch_delta : -pouch_delta,
-                         pouch_items[pouch_item]);
+                snprintf(said, sizeof said, "%s %d %s.", menu_lang::tr(pouch_delta > 0 ? "gave" : "took"), pouch_delta > 0 ? pouch_delta : -pouch_delta,
+                         menu_lang::tr(pouch_items[pouch_item]));
                 cheat_say(said);
                 changed = true;
             }
@@ -3992,7 +4002,7 @@ void menu_tick() {
         double shown = 0, game = 0;
         if (fps_take(now, shown_frames.load(), game_frames.load(), &next, &last_shown, &last_game, &shown, &game)) {
             snprintf(fps_text, sizeof fps_text, "%.0f", shown);
-            if (opts.framegen >= 2) snprintf(fps_sub, sizeof fps_sub, "game %.0f", game);
+            if (opts.framegen >= 2) snprintf(fps_sub, sizeof fps_sub, menu_lang::tr("game %.0f"), game);
             else fps_sub[0] = 0;
             fps_bmp.keyed = true;
             gdi_draw(fps_bmp, 120u * scale, 54u * scale, paint_fps, scale);

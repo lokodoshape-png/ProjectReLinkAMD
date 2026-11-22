@@ -2,6 +2,8 @@
 // wants where the GPU has them: mesh shaders, host memory import, graphics pipeline libraries), the window's
 // swapchain, and the rx_* table (vk_api.h). The NVN replay itself is vk_replay.cpp.
 #include "vk_paths.h"
+#define MENU_LANG_NO_GDI
+#include "menu_lang.h"   // (relink-amd: the boxes in Portuguese when the game is)
 #include "vk_loader.h"
 
 #include <atomic>
@@ -134,15 +136,24 @@ void module_fault(const VkShaderModuleCreateInfo* ci) {
              "(%d so far)", ci ? (size_t)ci->codeSize : 0, saved[0] ? ", kept as " : "", saved, n);
     if (n != 1 || dev.offscreen || getenv("HOS_HEADLESS")) return;
     std::thread([name = std::string(dev.props.deviceName), old = !dev.mesh_shader] {
-        std::string text = "The graphics driver of your " + name + " crashed while ReLink handed it one of the game's shaders. "
+        const bool pt = menu_lang::portuguese();   // (relink-amd: in Portuguese when the game is)
+        std::string text = pt ? "O driver de vídeo da sua " + name + " travou quando o ReLink entregou a ele um dos shaders do jogo. "
+                                "O ReLink deixa esses shaders de fora e continua, mas partes da imagem podem faltar, e o driver pode "
+                                "falhar de novo."
+                              : "The graphics driver of your " + name + " crashed while ReLink handed it one of the game's shaders. "
             "ReLink leaves such shaders out and goes on, but parts of the picture may be missing, and the driver may fail again.";
         if (old)
-            text += "\n\nThis card has no mesh shaders and is below what ReLink supports (NVIDIA GeForce RTX 20 series or newer, "
+            text += pt ? "\n\nEsta placa não tem mesh shaders e está abaixo do que o ReLink suporta (NVIDIA GeForce RTX série 20 ou "
+                         "mais nova, AMD Radeon RX série 6000 ou mais nova, ou Intel Arc). Vale a pena atualizar o driver, mas ela pode "
+                         "não rodar o jogo."
+                       : "\n\nThis card has no mesh shaders and is below what ReLink supports (NVIDIA GeForce RTX 20 series or newer, "
                     "AMD Radeon RX 6000 series or newer, or Intel Arc). Updating its driver is worth a try, but it may not run "
                     "the game.";
-        text += "\n\nIf you report it on ReLink's GitHub page, please attach relink_log.txt and the relink_driver_fault_1.spv file "
+        text += pt ? "\n\nSe for relatar isso na página do ReLink no GitHub, anexe o relink_log.txt e o arquivo relink_driver_fault_1.spv "
+                     "da pasta do jogo."
+                   : "\n\nIf you report it on ReLink's GitHub page, please attach relink_log.txt and the relink_driver_fault_1.spv file "
                 "from the game folder.";
-        MessageBoxA(nullptr, text.c_str(), "Project ReLink: graphics driver", MB_OK | MB_ICONWARNING | MB_TOPMOST);
+        menu_lang::message_box(text, pt ? "Project ReLink: driver de vídeo" : "Project ReLink: graphics driver", MB_OK | MB_ICONWARNING | MB_TOPMOST);
     }).detach();
 }
 VKAPI_ATTR VkResult VKAPI_CALL guarded_create_shader_module(VkDevice d, const VkShaderModuleCreateInfo* ci,
@@ -1423,11 +1434,16 @@ const MkwVkRenderer* mkwvk_init(const MkwVkHost* h) {
         logf("vk: this GPU has no mesh shaders: the game's foliage, grass and many effects cannot be drawn");
 #ifdef _WIN32
         std::thread([name = std::string(dev.props.deviceName)] {
-            const std::string text = "Your graphics card (" + name + ") or its driver has no mesh shader support, which Ocarina of Time "
+            const bool pt = menu_lang::portuguese();   // (relink-amd: in Portuguese when the game is)
+            const std::string text = pt ? "A sua placa de vídeo (" + name + ") ou o driver dela não suporta mesh shaders, que o Ocarina of "
+                "Time usa para folhagem, grama e muitos efeitos, então partes da imagem vão faltar ou aparecer quebradas.\n\nO ReLink "
+                "precisa de uma GPU com mesh shaders: NVIDIA GeForce RTX série 20 ou mais nova, AMD Radeon RX série 6000 ou mais nova, "
+                "ou Intel Arc. Se a sua placa é uma dessas, atualize o driver dela."
+                : "Your graphics card (" + name + ") or its driver has no mesh shader support, which Ocarina of Time "
                 "uses for foliage, grass and many effects, so parts of the picture will be missing or broken.\n\nReLink needs a GPU "
                 "with mesh shaders: NVIDIA GeForce RTX 20 series or newer, AMD Radeon RX 6000 series or newer, or Intel Arc. If your "
                 "card is one of those, update its driver.";
-            MessageBoxA(nullptr, text.c_str(), "Project ReLink: graphics card", MB_OK | MB_ICONWARNING | MB_TOPMOST);
+            menu_lang::message_box(text, pt ? "Project ReLink: placa de vídeo" : "Project ReLink: graphics card", MB_OK | MB_ICONWARNING | MB_TOPMOST);
         }).detach();
 #endif
     }
@@ -1452,10 +1468,14 @@ void device_lost_notice() {
 #ifdef _WIN32
     if (dev.offscreen || getenv("HOS_HEADLESS")) return;   // (no window: shader preparation, tests)
     std::thread([name = std::string(dev.props.deviceName)] {
-        const std::string text = "The graphics card (" + name + ") stopped responding to ReLink (Vulkan: device lost), so the "
+        const bool pt = menu_lang::portuguese();   // (relink-amd: in Portuguese when the game is)
+        const std::string text = pt ? "A placa de vídeo (" + name + ") parou de responder ao ReLink (Vulkan: device lost), então a "
+            "imagem vai ficar preta. O jogo não consegue se recuperar disso: feche e abra de novo.\n\nSe acontecer de novo no mesmo "
+            "lugar, abra uma issue na página do ReLink no GitHub e anexe o relink_log.txt da pasta do jogo."
+            : "The graphics card (" + name + ") stopped responding to ReLink (Vulkan: device lost), so the "
             "picture will stay black. The game cannot recover from this: close it and start it again.\n\nIf it happens again at "
             "the same place, please open an issue on ReLink's GitHub page and attach relink_log.txt from the game folder.";
-        MessageBoxA(nullptr, text.c_str(), "Project ReLink: graphics card stopped", MB_OK | MB_ICONERROR | MB_TOPMOST);
+        menu_lang::message_box(text, pt ? "Project ReLink: a placa de vídeo parou" : "Project ReLink: graphics card stopped", MB_OK | MB_ICONERROR | MB_TOPMOST);
     }).detach();
 #endif
 }

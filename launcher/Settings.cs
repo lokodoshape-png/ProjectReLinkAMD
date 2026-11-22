@@ -99,7 +99,7 @@ sealed class Settings
     /// The game built with NVIDIA DLSS: NVIDIA's DLSS SDK fetched from NVIDIA at each build, its license accepted by ticking it
     public bool NvidiaDlss = false;
     /// The launcher's own language: en (the default) or fr (Texts.cs reads it when the launcher opens)
-    public string UiLanguage = Texts.French ? "fr" : "en";
+    public string UiLanguage = Texts.Code;
     public string Language = Texts.GameLanguageOfWindows();
     /// The game folder (empty: none yet)
     public string Folder = "";
@@ -150,7 +150,7 @@ sealed class Settings
         s.Audio = Bool(l, "audio", true);
         s.InvertY = Bool(l, "invert_y", false);
         s.NvidiaDlss = Bool(l, "nvidia_dlss", false);
-        if (l.TryGetValue("ui_language", out var ui) && ui is "en" or "fr") s.UiLanguage = ui;
+        if (l.TryGetValue("ui_language", out var ui) && ui is "en" or "fr" or "pt") s.UiLanguage = ui;
         var here = AppContext.BaseDirectory.TrimEnd('\\', '/');
         var candidates = new[]
         {

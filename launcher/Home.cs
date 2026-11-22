@@ -61,78 +61,79 @@ public partial class MainWindow
     void BuildHomeRows()
     {
         // ---- display
-        SwitchRow(RowsDisplay, L("Plein écran", "Full screen"), L("F11 bascule aussi pendant le jeu.", "F11 switches it while you play, too."), out Fullscreen, out _);
-        SwitchRow(RowsDisplay, L("Écran à 60 Hz pendant le jeu", "Display at 60 Hz while you play"),
+        SwitchRow(RowsDisplay, L("Plein écran", "Full screen", "Tela cheia"), L("F11 bascule aussi pendant le jeu.", "F11 switches it while you play, too.", "F11 também alterna enquanto você joga."), out Fullscreen, out _);
+        SwitchRow(RowsDisplay, L("Écran à 60 Hz pendant le jeu", "Display at 60 Hz while you play", "Tela a 60 Hz durante o jogo"),
                   L("Sans synchronisation adaptative, un écran à 100 ou 144 Hz montre 60 images par seconde par à-coups. À 60 Hz chaque image dure le même temps. La fréquence d'origine revient quand le jeu se ferme.",
-                    "Without adaptive sync, a 100 or 144 Hz display shows 60 frames a second unevenly. At 60 Hz every frame lasts the same time. The display's own rate comes back when the game closes."),
+                    "Without adaptive sync, a 100 or 144 Hz display shows 60 frames a second unevenly. At 60 Hz every frame lasts the same time. The display's own rate comes back when the game closes.", "Sem sincronização adaptativa, uma tela de 100 ou 144 Hz mostra 60 quadros por segundo de forma irregular. A 60 Hz cada quadro dura o mesmo tempo. A taxa da própria tela volta quando o jogo fecha."),
                   out Display60, out Display60Hint);
-        ResolutionGroup = ChoiceRow(RowsDisplay, L("Résolution du rendu 3D", "3D render resolution"),
+        ResolutionGroup = ChoiceRow(RowsDisplay, L("Résolution du rendu 3D", "3D render resolution", "Resolução de renderização 3D"),
                   L("Native est la plus nette. Les pourcentages allègent la carte graphique ; le jeu agrandit ensuite l'image.",
-                    "Native is the sharpest. The percentages lighten the graphics card's work; the game scales the picture up afterwards."),
-                  "Resolution", (1, L("Native", "Native")), (0, L("Automatique", "Automatic")), (2, "75 %"), (3, "67 %"), (5, "58 %"), (4, "50 %"));
-        UpscalerGroup = ChoiceRow(RowsDisplay, L("Agrandissement de la 3D", "Upscaler"),
+                    "Native is the sharpest. The percentages lighten the graphics card's work; the game scales the picture up afterwards.", "Nativa é a mais nítida. As porcentagens aliviam o trabalho da placa de vídeo; o jogo aumenta a imagem depois."),
+                  "Resolution", (1, L("Native", "Native", "Nativa")), (0, L("Automatique", "Automatic", "Automática")), (2, "75 %"), (3, "67 %"), (5, "58 %"), (4, "50 %"));
+        UpscalerGroup = ChoiceRow(RowsDisplay, L("Agrandissement de la 3D", "Upscaler", "Upscaler"),
                   L("Ce qui agrandit la 3D jusqu'à l'écran et lisse ses bords. AMD FSR marche sur toutes les cartes graphiques ; NVIDIA DLSS demande une carte RTX et la case NVIDIA DLSS ci-dessous. Avec FSR ou DLSS, mettez la netteté vers 80 %.",
-                    "What scales the 3D up to the screen and smooths its edges. AMD FSR works on every graphics card; NVIDIA DLSS needs an RTX card and the NVIDIA DLSS switch below. With FSR or DLSS, set Sharpness to about 80 %."),
-                  "Upscaler", (0, L("Celui du jeu", "The game's own")), (3, "AMD FSR"), (4, L("AMD FSR, AA natif", "AMD FSR native AA")), (1, "NVIDIA DLSS"), (2, "NVIDIA DLAA"));
-        UpscaleGroup = ChoiceRow(RowsDisplay, L("Filtre d'agrandissement de la fenêtre", "Window scaling filter"), L("Quand l'image est plus petite que la fenêtre.", "When the picture is smaller than the window."), "Upscale", (0, L("Simple", "Simple")), (1, "Catmull-Rom"), (2, "Lanczos"));
-        SwitchRow(RowsDisplay, L("NVIDIA DLSS (cartes RTX)", "NVIDIA DLSS (RTX cards)"),
+                    "What scales the 3D up to the screen and smooths its edges. AMD FSR works on every graphics card; NVIDIA DLSS needs an RTX card and the NVIDIA DLSS switch below. With FSR or DLSS, set Sharpness to about 80 %.", "O que aumenta o 3D até a tela e suaviza as bordas. O AMD FSR funciona em qualquer placa de vídeo; o NVIDIA DLSS precisa de uma placa RTX e da chave NVIDIA DLSS abaixo. Com FSR ou DLSS, deixe a Nitidez perto de 80 %."),
+                  "Upscaler", (0, L("Celui du jeu", "The game's own", "O do próprio jogo")), (3, "AMD FSR"), (4, L("AMD FSR, AA natif", "AMD FSR native AA", "AMD FSR AA nativo")), (1, "NVIDIA DLSS"), (2, "NVIDIA DLAA"));
+        UpscaleGroup = ChoiceRow(RowsDisplay, L("Filtre d'agrandissement de la fenêtre", "Window scaling filter", "Filtro de escala da janela"), L("Quand l'image est plus petite que la fenêtre.", "When the picture is smaller than the window.", "Quando a imagem é menor que a janela."), "Upscale", (0, L("Simple", "Simple", "Simples")), (1, "Catmull-Rom"), (2, "Lanczos"));
+        SwitchRow(RowsDisplay, L("NVIDIA DLSS (cartes RTX)", "NVIDIA DLSS (RTX cards)", "NVIDIA DLSS (placas RTX)"),
                   L("Le jeu est reconstruit avec le SDK DLSS, téléchargé chez NVIDIA. L'activer, c'est accepter la licence du SDK NVIDIA DLSS (github.com/NVIDIA/DLSS). Ensuite, choisissez DLSS ou DLAA dans le menu du jeu (touche Insert, Upscaler).",
-                    "The game is built again with the DLSS SDK, downloaded from NVIDIA. Turning this on accepts NVIDIA's DLSS SDK license (github.com/NVIDIA/DLSS). Then choose DLSS or DLAA in the game's menu (Insert key, Upscaler)."),
+                    "The game is built again with the DLSS SDK, downloaded from NVIDIA. Turning this on accepts NVIDIA's DLSS SDK license (github.com/NVIDIA/DLSS). Then choose DLSS or DLAA in the game's menu (Insert key, Upscaler).", "O jogo é compilado de novo com o SDK do DLSS, baixado da NVIDIA. Ligar isto aceita a licença do SDK DLSS da NVIDIA (github.com/NVIDIA/DLSS). Depois escolha DLSS ou DLAA no menu do jogo (tecla Insert, Upscaler)."),
                   out NvidiaDlss, out _);
 
         Sharpness = new Slider { Style = St("Line"), Minimum = 0, Maximum = 100, TickFrequency = 5, IsSnapToTickEnabled = true, Width = 210, LargeChange = 10, SmallChange = 5 };
         SharpnessText = new TextBlock { Width = 48, TextAlignment = TextAlignment.Right, VerticalAlignment = VerticalAlignment.Center, Foreground = Res("BoneSoft") };
         var sharp = new Grid { ColumnDefinitions = { new ColumnDefinition(), new ColumnDefinition { Width = GridLength.Auto }, new ColumnDefinition { Width = GridLength.Auto } } };
-        sharp.Children.Add(new TextBlock { Text = L("Netteté", "Sharpness"), Style = St("RowLabel") });
+        sharp.Children.Add(new TextBlock { Text = L("Netteté", "Sharpness", "Nitidez"), Style = St("RowLabel") });
         Grid.SetColumn(Sharpness, 1);
         Grid.SetColumn(SharpnessText, 2);
         sharp.Children.Add(Sharpness);
         sharp.Children.Add(SharpnessText);
         RowsDisplay.Children.Add(new Border { Style = St("Row"), Child = sharp });
 
-        SwitchRow(RowsDisplay, L("Compteur d'images par seconde", "Frames-per-second counter"), null, out FpsCounter, out _);
-        SwitchRow(RowsDisplay, L("Ultra-large", "Ultrawide"), L("La caméra prend le format de l'écran s'il est plus large que 16:9.", "The camera takes the display's shape when it is wider than 16:9."),
+        SwitchRow(RowsDisplay, L("Compteur d'images par seconde", "Frames-per-second counter", "Contador de quadros por segundo"), null, out FpsCounter, out _);
+        SwitchRow(RowsDisplay, L("Ultra-large", "Ultrawide", "Ultrawide"), L("La caméra prend le format de l'écran s'il est plus large que 16:9.", "The camera takes the display's shape when it is wider than 16:9.", "A câmera assume o formato da tela quando ela é mais larga que 16:9."),
                   out Ultrawide, out _);
 
         // ---- smoothness
-        FrameRateGroup = ChoiceRow(RowsSmooth, L("Images par seconde", "Frames per second"),
+        FrameRateGroup = ChoiceRow(RowsSmooth, L("Images par seconde", "Frames per second", "Quadros por segundo"),
                   L("Débloqué : jusqu'à la fréquence de l'écran, et le jeu suit le temps réel. Sur un écran à fréquence fixe, 60 est plus régulier. " +
                     "30, fluide : chaque image reste affichée le même temps (synchronisée à l'écran), pour les PC qui n'atteignent pas 60.",
                     "Unlocked: up to the display's rate, and the game follows real time. On a fixed-rate display, 60 is steadier. " +
-                    "30, smooth: every frame stays on screen for the same time (synced to the display), for PCs that do not reach 60."),
-                  "FrameRate", (0, L("60, comme la console", "60, as on the console")), (1, L("Débloqué", "Unlocked")),
-                  (2, L("30, fluide", "30, smooth")));
-        SpeedGroup = ChoiceRow(RowsSmooth, L("Vitesse du jeu", "Game speed"),
-                  L("Temps réel : si une image tarde, le jeu ne ralentit pas.", "Real time: when a frame is late, the game does not slow down."),
-                  "Speed", (0, L("Par image", "By frame")), (1, L("Temps réel", "Real time")));
-        FramegenGroup = ChoiceRow(RowsSmooth, L("Génération d'images", "Frame generation"),
+                    "30, smooth: every frame stays on screen for the same time (synced to the display), for PCs that do not reach 60.", "Desbloqueado: até a taxa da tela, e o jogo segue o tempo real. Numa tela de taxa fixa, 60 é mais estável. " +
+                    "30, suave: cada quadro fica na tela pelo mesmo tempo (sincronizado com a tela), para PCs que não chegam a 60."),
+                  "FrameRate", (0, L("60, comme la console", "60, as on the console", "60, como no console")), (1, L("Débloqué", "Unlocked", "Desbloqueado")),
+                  (2, L("30, fluide", "30, smooth", "30, suave")));
+        SpeedGroup = ChoiceRow(RowsSmooth, L("Vitesse du jeu", "Game speed", "Velocidade do jogo"),
+                  L("Temps réel : si une image tarde, le jeu ne ralentit pas.", "Real time: when a frame is late, the game does not slow down.", "Tempo real: quando um quadro atrasa, o jogo não fica lento."),
+                  "Speed", (0, L("Par image", "By frame", "Por quadro")), (1, L("Temps réel", "Real time", "Tempo real")));
+        FramegenGroup = ChoiceRow(RowsSmooth, L("Génération d'images", "Frame generation", "Geração de quadros"),
                   L("Des images intercalées : plus fluide à l'œil, pas plus réactif. L'écran garde alors sa fréquence.",
-                    "Frames made in between: smoother to the eye, not more responsive. The display keeps its own rate then."),
-                  "Framegen", (0, L("Aucune", "None")), (2, "×2"), (3, "×3"), (4, "×4"));
-        SwitchRow(RowsSmooth, L("Rythme régulier des images générées", "Even pacing of generated frames"),
-                  L("Avec la génération d'images seulement.", "With frame generation only."), out FramePacing, out _);
+                    "Frames made in between: smoother to the eye, not more responsive. The display keeps its own rate then.", "Quadros criados no meio: mais suave aos olhos, não mais responsivo. A tela mantém a própria taxa nesse caso."),
+                  "Framegen", (0, L("Aucune", "None", "Nenhuma")), (2, "×2"), (3, "×3"), (4, "×4"));
+        SwitchRow(RowsSmooth, L("Rythme régulier des images générées", "Even pacing of generated frames", "Ritmo uniforme dos quadros gerados"),
+                  L("Avec la génération d'images seulement.", "With frame generation only.", "Só com a geração de quadros."), out FramePacing, out _);
         SwitchRow(RowsSmooth, "V-Sync",
                   L("Chaque image attend le rafraîchissement de l'écran : plus de déchirure de l'image, un peu plus de délai. Utile là où le pilote n'a pas de mode mailbox (AMD sous Windows). Le menu en jeu le change aussi, aussitôt.",
-                    "Each frame waits for the display's refresh: no more tearing, a little more delay. Useful where the driver has no mailbox mode (AMD on Windows). The in-game menu changes it too, at once."),
+                    "Each frame waits for the display's refresh: no more tearing, a little more delay. Useful where the driver has no mailbox mode (AMD on Windows). The in-game menu changes it too, at once.", "Cada quadro espera a atualização da tela: sem tearing, um pouco mais de atraso. Útil onde o driver não tem o modo mailbox (AMD no Windows). O menu do jogo também muda isso, na hora."),
                   out VSync, out _);
 
         // ---- game
         LanguageBox = new ComboBox { Style = St("List"), Width = 230, ItemsSource = GameLanguages.Select(l => new LangItem(l.Code, l.Name)).ToList() };
         var lang = new Grid { ColumnDefinitions = { new ColumnDefinition(), new ColumnDefinition { Width = GridLength.Auto } } };
-        lang.Children.Add(new TextBlock { Text = L("Langue du jeu", "Game language"), Style = St("RowLabel") });
+        lang.Children.Add(new TextBlock { Text = L("Langue du jeu", "Game language", "Idioma do jogo"), Style = St("RowLabel") });
         Grid.SetColumn(LanguageBox, 1);
         lang.Children.Add(LanguageBox);
         RowsGame.Children.Add(new Border { Style = St("Row"), Child = lang });
-        UiLanguageGroup = ChoiceRow(RowsGame, L("Langue du lanceur", "Launcher language"),
-                  L("Le changement se voit à la prochaine ouverture de ReLink.", "The change shows the next time ReLink opens."),
-                  "UiLanguage", (0, "English"), (1, "Français"));
-        SwitchRow(RowsGame, L("Son", "Sound"), null, out Audio, out _);
-        SwitchRow(RowsGame, L("Profil portable", "Handheld profile"),
-                  L("Les réglages graphiques du mode portable : plus léger, plus flou.", "The handheld mode's graphics settings: lighter, softer."), out Handheld, out _);
+        UiLanguageGroup = ChoiceRow(RowsGame, L("Langue du lanceur", "Launcher language", "Idioma do launcher"),
+                  L("Le changement se voit à la prochaine ouverture de ReLink.", "The change shows the next time ReLink opens.", "A mudança aparece na próxima vez que o ReLink abrir."),
+                  "UiLanguage", (0, "English"), (1, "Français"), (2, "Português (Brasil)"));
+        SwitchRow(RowsGame, L("Son", "Sound", "Som"), null, out Audio, out _);
+        SwitchRow(RowsGame, L("Profil portable", "Handheld profile", "Perfil portátil"),
+                  L("Les réglages graphiques du mode portable : plus léger, plus flou.", "The handheld mode's graphics settings: lighter, softer.", "As configurações gráficas do modo portátil: mais leves, mais suaves."), out Handheld, out _);
         FolderText = new TextBlock { Style = St("RowHint"), TextTrimming = TextTrimming.CharacterEllipsis, TextWrapping = TextWrapping.NoWrap };
-        var open = new Button { Style = St("Link"), Content = L("Ouvrir", "Open"), Margin = new Thickness(0, 0, 22, 0) };
+        var open = new Button { Style = St("Link"), Content = L("Ouvrir", "Open", "Abrir"), Margin = new Thickness(0, 0, 22, 0) };
         open.Click += OpenGameFolder;
-        var again = new Button { Style = St("Link"), Content = L("Installer de nouveau…", "Install again…") };
+        var again = new Button { Style = St("Link"), Content = L("Installer de nouveau…", "Install again…", "Instalar de novo…") };
         again.Click += (_, _) => { if (game == null) { ShowInstall(); CheckAll(); } };
         RowsGame.Children.Add(new Border
         {
@@ -141,14 +142,14 @@ public partial class MainWindow
             {
                 Children =
                 {
-                    new TextBlock { Text = L("Dossier du jeu", "Game folder"), Style = St("RowLabel") }, FolderText,
+                    new TextBlock { Text = L("Dossier du jeu", "Game folder", "Pasta do jogo"), Style = St("RowLabel") }, FolderText,
                     new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 8, 0, 0), Children = { open, again } },
                 },
             },
         });
         // (the prepared shaders deleted, prepared again at the next start: objects drawn white or wrong after a start that
         // crashed while it prepared them)
-        var reprepare = new Button { Style = St("Link"), Content = L("Préparer de nouveau…", "Prepare again…"), HorizontalAlignment = HorizontalAlignment.Left };
+        var reprepare = new Button { Style = St("Link"), Content = L("Préparer de nouveau…", "Prepare again…", "Preparar de novo…"), HorizontalAlignment = HorizontalAlignment.Left };
         reprepare.Click += PrepareShadersAgain;
         RowsGame.Children.Add(new Border
         {
@@ -157,11 +158,11 @@ public partial class MainWindow
             {
                 Children =
                 {
-                    new TextBlock { Text = L("Shaders", "Shaders"), Style = St("RowLabel") },
+                    new TextBlock { Text = L("Shaders", "Shaders", "Shaders"), Style = St("RowLabel") },
                     new TextBlock
                     {
                         Text = L("Préparés une fois pour votre carte graphique. Si des objets s'affichent mal (tout blancs, par exemple), préparez-les de nouveau : le prochain lancement prend 10 à 15 minutes de plus. Vos sauvegardes ne sont pas touchées.",
-                                 "Prepared once for your graphics card. If objects look wrong (all white, for example), prepare them again: the next start takes 10 to 15 minutes longer. Your saves are not touched."),
+                                 "Prepared once for your graphics card. If objects look wrong (all white, for example), prepare them again: the next start takes 10 to 15 minutes longer. Your saves are not touched.", "Preparados uma vez para a sua placa de vídeo. Se os objetos parecerem errados (todos brancos, por exemplo), prepare de novo: a próxima abertura demora de 10 a 15 minutos a mais. Os seus saves não são mexidos."),
                         Style = St("RowHint"),
                     },
                     new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 8, 0, 0), Children = { reprepare } },
@@ -175,30 +176,30 @@ public partial class MainWindow
         RowsControls.Children.Add(new TextBlock
         {
             Text = L("Manette Xbox, ou toute manette XInput ; une manette PlayStation ou Switch passe par Steam Input ou DS4Windows. Les boutons suivent leur position : celui du bas est le B de la console.",
-                     "An Xbox controller, or any XInput one; a PlayStation or Switch controller goes through Steam Input or DS4Windows. Buttons follow their place: the bottom one is the console's B."),
+                     "An Xbox controller, or any XInput one; a PlayStation or Switch controller goes through Steam Input or DS4Windows. Buttons follow their place: the bottom one is the console's B.", "Um controle de Xbox, ou qualquer XInput; um controle de PlayStation ou de Switch passa pelo Steam Input ou DS4Windows. Os botões seguem a posição: o de baixo é o B do console."),
             Style = St("Body"), Margin = new Thickness(0, 10, 0, 4),
         });
-        SwitchRow(RowsControls, L("Souris : inverser l'axe vertical", "Mouse: invert the vertical axis"),
-                  L("La souris tourne la caméra après un clic dans la fenêtre du jeu ; Échap la libère.", "The mouse turns the camera after a click in the game's window; Escape lets it go."),
+        SwitchRow(RowsControls, L("Souris : inverser l'axe vertical", "Mouse: invert the vertical axis", "Mouse: inverter o eixo vertical"),
+                  L("La souris tourne la caméra après un clic dans la fenêtre du jeu ; Échap la libère.", "The mouse turns the camera after a click in the game's window; Escape lets it go.", "O mouse gira a câmera depois de um clique na janela do jogo; Esc o solta."),
                   out InvertY, out _);
         static string K(char c) => Native.KeyLabel(c);
-        Keys(L("Manette", "Controller"), new[]
+        Keys(L("Manette", "Controller", "Controle"), new[]
         {
-            (L("A (bas)", "A (bottom)"), L("B de la console", "the console's B")), (L("B (droite)", "B (right)"), L("A de la console", "the console's A")),
-            (L("X (gauche)", "X (left)"), L("Y de la console", "the console's Y")), (L("Y (haut)", "Y (top)"), L("X de la console", "the console's X")),
+            (L("A (bas)", "A (bottom)", "A (baixo)"), L("B de la console", "the console's B", "o B do console")), (L("B (droite)", "B (right)", "B (direita)"), L("A de la console", "the console's A", "o A do console")),
+            (L("X (gauche)", "X (left)", "X (esquerda)"), L("Y de la console", "the console's Y", "o Y do console")), (L("Y (haut)", "Y (top)", "Y (cima)"), L("X de la console", "the console's X", "o X do console")),
             ("LB, RB", "L, R"), ("LT, RT", "ZL, ZR"), ("Start", "+"), ("Back", "−"),
-            (L("Sticks", "Sticks"), L("les sticks (clic : L3, R3)", "the sticks (click: L3, R3)")), (L("Croix", "D-pad"), L("la croix directionnelle", "the D-pad")),
+            (L("Sticks", "Sticks", "Analógicos"), L("les sticks (clic : L3, R3)", "the sticks (click: L3, R3)", "os analógicos (clique: L3, R3)")), (L("Croix", "D-pad", "Direcional"), L("la croix directionnelle", "the D-pad", "o direcional")),
         });
-        Keys(L("Clavier et souris", "Keyboard and mouse"), new[]
+        Keys(L("Clavier et souris", "Keyboard and mouse", "Teclado e mouse"), new[]
         {
-            ($"{K('W')} {K('A')} {K('S')} {K('D')}", L("stick gauche", "left stick")),
-            (L($"Flèches, ou {K('I')} {K('J')} {K('K')} {K('L')}", $"Arrows, or {K('I')} {K('J')} {K('K')} {K('L')}"), L("caméra (stick droit)", "camera (right stick)")),
-            (L("Espace", "Space"), "X"), (K('E'), "A"), (L("Maj", "Shift"), "B"), ($"{K('Q')}, {K('R')}", "L, R"),
-            (L($"{K('Z')}, {K('X')} ou {K('F')}", $"{K('Z')}, {K('X')} or {K('F')}"), "ZL, ZR"),
-            ($"Ctrl, {K('C')}", L("clic du stick gauche, droit", "left, right stick click")),
-            (L($"Tab ou Entrée, {K('M')}", $"Tab or Enter, {K('M')}"), "+, −"), ("1 2 3 4", L("la croix", "the D-pad")),
-            (L("Clic gauche, droit", "Left, right click"), "Y, ZL"), ("F11", L("plein écran", "full screen")),
-            (L("Inser ou F1", "Insert or F1"), L("le menu des réglages en jeu", "the in-game settings menu")),
+            ($"{K('W')} {K('A')} {K('S')} {K('D')}", L("stick gauche", "left stick", "analógico esquerdo")),
+            (L($"Flèches, ou {K('I')} {K('J')} {K('K')} {K('L')}", $"Arrows, or {K('I')} {K('J')} {K('K')} {K('L')}", $"Setas, ou {K('I')} {K('J')} {K('K')} {K('L')}"), L("caméra (stick droit)", "camera (right stick)", "câmera (analógico direito)")),
+            (L("Espace", "Space", "Espaço"), "X"), (K('E'), "A"), (L("Maj", "Shift", "Shift"), "B"), ($"{K('Q')}, {K('R')}", "L, R"),
+            (L($"{K('Z')}, {K('X')} ou {K('F')}", $"{K('Z')}, {K('X')} or {K('F')}", $"{K('Z')}, {K('X')} ou {K('F')}"), "ZL, ZR"),
+            ($"Ctrl, {K('C')}", L("clic du stick gauche, droit", "left, right stick click", "clique do analógico esquerdo, direito")),
+            (L($"Tab ou Entrée, {K('M')}", $"Tab or Enter, {K('M')}", $"Tab ou Enter, {K('M')}"), "+, −"), ("1 2 3 4", L("la croix", "the D-pad", "o direcional")),
+            (L("Clic gauche, droit", "Left, right click", "Clique esquerdo, direito"), "Y, ZL"), ("F11", L("plein écran", "full screen", "tela cheia")),
+            (L("Inser ou F1", "Insert or F1", "Insert ou F1"), L("le menu des réglages en jeu", "the in-game settings menu", "o menu de configurações do jogo")),
         });
 
         Wire();
@@ -318,18 +319,18 @@ public partial class MainWindow
     // ---------------------------------------------------------------- Home's cards: what Play will show, in a line each
     void UpdateHero()
     {
-        var res = s.Resolution switch { 1 => L("Native", "Native"), 0 => L("Automatique", "Automatic"), 2 => "75 %", 3 => "67 %", 5 => "58 %", 4 => "50 %", _ => "" };
-        var up = s.Upscaler switch { 3 => "AMD FSR", 4 => L("AMD FSR, AA natif", "AMD FSR native AA"), 1 => "NVIDIA DLSS", 2 => "NVIDIA DLAA", _ => L("Celui du jeu", "The game's own") };
-        LooksText.Text = $"{(s.Fullscreen != 0 ? L("Plein écran", "Full screen") : L("Fenêtre", "Window"))} · {res} · {up}";
-        var rate = s.FrameRate switch { 1 => L("FPS débloqués", "Unlocked fps"), 2 => L("30 fps réguliers", "Even 30 fps"), _ => "60 fps" };
+        var res = s.Resolution switch { 1 => L("Native", "Native", "Nativa"), 0 => L("Automatique", "Automatic", "Automática"), 2 => "75 %", 3 => "67 %", 5 => "58 %", 4 => "50 %", _ => "" };
+        var up = s.Upscaler switch { 3 => "AMD FSR", 4 => L("AMD FSR, AA natif", "AMD FSR native AA", "AMD FSR AA nativo"), 1 => "NVIDIA DLSS", 2 => "NVIDIA DLAA", _ => L("Celui du jeu", "The game's own", "O do próprio jogo") };
+        LooksText.Text = $"{(s.Fullscreen != 0 ? L("Plein écran", "Full screen", "Tela cheia") : L("Fenêtre", "Window", "Janela"))} · {res} · {up}";
+        var rate = s.FrameRate switch { 1 => L("FPS débloqués", "Unlocked fps", "fps desbloqueado"), 2 => L("30 fps réguliers", "Even 30 fps", "30 fps estável"), _ => "60 fps" };
         MovesText.Text = s.FrameGeneration >= 2 ? $"{rate} · ×{s.FrameGeneration}" : rate;
-        LooksSub.Text = L($"Netteté {s.Sharpness} %", $"Sharpness {s.Sharpness} %") + (s.Ultrawide != 0 ? L(" · ultra-large", " · ultrawide") : "");
-        MovesSub.Text = (s.FrameGeneration >= 2 ? L("Génération d'images", "Frame generation") : L("Sans génération d'images", "No frame generation")) +
+        LooksSub.Text = L($"Netteté {s.Sharpness} %", $"Sharpness {s.Sharpness} %", $"Nitidez {s.Sharpness} %") + (s.Ultrawide != 0 ? L(" · ultra-large", " · ultrawide", " · ultrawide") : "");
+        MovesSub.Text = (s.FrameGeneration >= 2 ? L("Génération d'images", "Frame generation", "Geração de quadros") : L("Sans génération d'images", "No frame generation", "Sem geração de quadros")) +
                         (s.VSync != 0 ? " · V-Sync" : "");
         // (the sky's line: once, after an install or an update, what the first start does; the rest of the time the name's)
         HeroSub.Text = justBuilt ? L("Prêt à jouer ! Le premier lancement prépare les shaders pour votre carte graphique : une fois, environ 15 minutes.",
-                                     "Ready to play! The first start prepares the shaders for your graphics card: once, about 15 minutes.")
-                                 : L("recompilé pour votre PC", "recompiled for your PC");
+                                     "Ready to play! The first start prepares the shaders for your graphics card: once, about 15 minutes.", "Pronto para jogar! A primeira abertura prepara os shaders para a sua placa de vídeo: uma vez só, cerca de 15 minutos.")
+                                 : L("recompilé pour votre PC", "recompiled for your PC", "recompilado para o seu PC");
         UpdateHomeCards();
     }
 
@@ -389,7 +390,7 @@ public partial class MainWindow
         OnPick(FrameRateGroup, v => s.FrameRate = v);
         OnPick(SpeedGroup, v => s.GameSpeed = v);
         OnPick(FramegenGroup, v => s.FrameGeneration = v);
-        OnPick(UiLanguageGroup, v => s.UiLanguage = v == 1 ? "fr" : "en");
+        OnPick(UiLanguageGroup, v => s.UiLanguage = v == 1 ? "fr" : v == 2 ? "pt" : "en");
         Sharpness.ValueChanged += (_, e) =>
         {
             SharpnessText.Text = $"{(int)e.NewValue} %";
@@ -419,7 +420,7 @@ public partial class MainWindow
         Pick(UpscaleGroup, s.Upscaling);
         Pick(FrameRateGroup, s.FrameRate);
         Pick(FramegenGroup, s.FrameGeneration);
-        Pick(UiLanguageGroup, s.UiLanguage == "fr" ? 1 : 0);
+        Pick(UiLanguageGroup, s.UiLanguage == "fr" ? 1 : s.UiLanguage == "pt" ? 2 : 0);
         Sharpness.Value = s.Sharpness;
         SharpnessText.Text = $"{s.Sharpness} %";
         var items = (List<LangItem>)LanguageBox.ItemsSource;
@@ -451,14 +452,14 @@ public partial class MainWindow
         Dependents();
         loading = false;
         try { s.Save(); }
-        catch (Exception e) { MainNote.Text = L("Réglages non enregistrés : ", "Settings not saved: ") + e.Message; }
+        catch (Exception e) { MainNote.Text = L("Réglages non enregistrés : ", "Settings not saved: ", "Configurações não salvas: ") + e.Message; }
     }
 
     // ---------------------------------------------------------------- what the game needs: the notes on the staff
     void ShowHome()
     {
         updating = false;
-        staff.Set(("game", L("Jeu", "Game")), ("pad", L("Manette", "Controller")), ("screen", L("Écran", "Display")));
+        staff.Set(("game", L("Jeu", "Game", "Jogo")), ("pad", L("Manette", "Controller", "Controle")), ("screen", L("Écran", "Display", "Tela")));
         Show(View.Home);
         try { if (s.Folder != "") s.LoadGame(); } catch (Exception) { }
         ShowSettings();
@@ -493,10 +494,10 @@ public partial class MainWindow
         if (tools == null)
         {
             MainNote.Text = L("Les outils de construction de ReLink sont introuvables : installez de nouveau ReLink.",
-                              "ReLink's build tools were not found: install ReLink again.");
+                              "ReLink's build tools were not found: install ReLink again.", "As ferramentas de compilação do ReLink não foram encontradas: instale o ReLink de novo.");
             return;
         }
-        Rebuild(tools, s.Folder, L("Reconstruction du jeu avec vos mods", "Building your game again with your mods"));
+        Rebuild(tools, s.Folder, L("Reconstruction du jeu avec vos mods", "Building your game again with your mods", "Compilando o jogo de novo com os seus mods"));
     }
 
     void ShowChecks()
@@ -506,21 +507,21 @@ public partial class MainWindow
         {
             var ok = Game.Installed(s.Folder);
             if (ok) g.Done(); else g.Problem();
-            g.Sub = ok ? L("Prêt", "Ready") : L("Introuvable : installez-le de nouveau", "Not found: install it again");
+            g.Sub = ok ? L("Prêt", "Ready", "Pronto") : L("Introuvable : installez-le de nouveau", "Not found: install it again", "Não encontrado: instale de novo");
         }
         if (staff["pad"] is { } p)
         {
             var n = Native.PadsConnected();
             if (n > 0) p.Done(); else p.Waiting();
-            p.Sub = n == 0 ? L("Aucune : le clavier et la souris jouent aussi", "None: keyboard and mouse play too")
-                  : n == 1 ? L("Connectée", "Connected") : L($"{n} connectées", $"{n} connected");
+            p.Sub = n == 0 ? L("Aucune : le clavier et la souris jouent aussi", "None: keyboard and mouse play too", "Nenhum: teclado e mouse também jogam")
+                  : n == 1 ? L("Connectée", "Connected", "Conectado") : L($"{n} connectées", $"{n} connected", $"{n} conectados");
         }
         if (staff["screen"] is { } d)
         {
             var (w, h, hz) = Native.CurrentMode();
             d.Done();
             var to60 = s.Display60 && display60Possible && s.FrameGeneration < 2;
-            d.Sub = w == 0 ? "" : to60 ? L($"{w}×{h}, {hz} Hz, 60 Hz pendant le jeu", $"{w}×{h}, {hz} Hz, 60 Hz while you play") : $"{w}×{h}, {hz} Hz";
+            d.Sub = w == 0 ? "" : to60 ? L($"{w}×{h}, {hz} Hz, 60 Hz pendant le jeu", $"{w}×{h}, {hz} Hz, 60 Hz while you play", $"{w}×{h}, {hz} Hz, 60 Hz durante o jogo") : $"{w}×{h}, {hz} Hz";
         }
     }
 
@@ -531,8 +532,8 @@ public partial class MainWindow
         var can60 = w > 0 && Native.RatesAt(w, h).Contains(60);
         display60Possible = can60 && origHz != 60;
         Display60.IsEnabled = display60Possible && s.FrameGeneration < 2;
-        if (origHz == 60) Display60Hint.Text = L("L'écran est déjà à 60 Hz : rien à changer.", "The display is already at 60 Hz: nothing to change.");
-        else if (!can60) Display60Hint.Text = L("Cet écran ne propose pas 60 Hz à sa résolution actuelle.", "This display has no 60 Hz mode at its current resolution.");
+        if (origHz == 60) Display60Hint.Text = L("L'écran est déjà à 60 Hz : rien à changer.", "The display is already at 60 Hz: nothing to change.", "A tela já está a 60 Hz: nada a mudar.");
+        else if (!can60) Display60Hint.Text = L("Cet écran ne propose pas 60 Hz à sa résolution actuelle.", "This display has no 60 Hz mode at its current resolution.", "Esta tela não tem modo de 60 Hz na resolução atual.");
         ShowChecks();
     }
 
@@ -571,13 +572,13 @@ public partial class MainWindow
         if (game != null || runner != null || !Game.Installed(folder)) return;
         s.Folder = folder;
         try { s.Save(); }
-        catch (Exception ex) { MainNote.Text = L("Réglages non enregistrés : ", "Settings not saved: ") + ex.Message; return; }
+        catch (Exception ex) { MainNote.Text = L("Réglages non enregistrés : ", "Settings not saved: ", "Configurações não salvas: ") + ex.Message; return; }
         var screenNote = "";
         UpdateScreen();
         if (s.Display60 && display60Possible && s.FrameGeneration < 2)   // (frame generation fills the display's own refresh)
             screenNote = Native.SetRefresh(60, false, out var why)
-                ? L($"L'écran est à 60 Hz ; il revient à {origHz} Hz quand vous quittez le jeu.", $"The display is at 60 Hz; it goes back to {origHz} Hz when you leave the game.")
-                : L($"Écran laissé à {origHz} Hz ({why}).", $"Display left at {origHz} Hz ({why}).");
+                ? L($"L'écran est à 60 Hz ; il revient à {origHz} Hz quand vous quittez le jeu.", $"The display is at 60 Hz; it goes back to {origHz} Hz when you leave the game.", $"A tela está a 60 Hz; ela volta para {origHz} Hz quando você sair do jogo.")
+                : L($"Écran laissé à {origHz} Hz ({why}).", $"Display left at {origHz} Hz ({why}).", $"Tela mantida a {origHz} Hz ({why}).");
         var psi = new ProcessStartInfo(Game.Exe(folder)) { WorkingDirectory = folder, UseShellExecute = false };
         foreach (var k in psi.Environment.Keys.Where(k => k.StartsWith("HOS_", StringComparison.OrdinalIgnoreCase) ||
                                                           k.StartsWith("RX_", StringComparison.OrdinalIgnoreCase)).ToList())
@@ -594,7 +595,7 @@ public partial class MainWindow
         catch (Exception ex)
         {
             Native.RestoreRefresh();
-            MainNote.Text = L("Le jeu n'a pas démarré : ", "The game did not start: ") + ex.Message;
+            MainNote.Text = L("Le jeu n'a pas démarré : ", "The game did not start: ", "O jogo não abriu: ") + ex.Message;
             return;
         }
         if (game == null) { Native.RestoreRefresh(); return; }
@@ -602,7 +603,7 @@ public partial class MainWindow
         game.Exited += (_, _) => Dispatcher.BeginInvoke(GameEnded);
         MainButton.IsEnabled = false;
         justBuilt = false;
-        ShowPlaying(screenNote == "" ? L("Le jeu tourne.", "The game is running.") : screenNote);
+        ShowPlaying(screenNote == "" ? L("Le jeu tourne.", "The game is running.", "O jogo está rodando.") : screenNote);
         WindowState = WindowState.Minimized;
     }
 
@@ -633,6 +634,6 @@ public partial class MainWindow
     {
         Native.RestoreRefresh();
         RestoreNow.Visibility = Visibility.Collapsed;
-        PlayingHint.Text = L($"Écran remis à {Native.CurrentMode().hz} Hz. Le jeu tourne toujours.", $"Display back at {Native.CurrentMode().hz} Hz. The game is still running.");
+        PlayingHint.Text = L($"Écran remis à {Native.CurrentMode().hz} Hz. Le jeu tourne toujours.", $"Display back at {Native.CurrentMode().hz} Hz. The game is still running.", $"Tela de volta a {Native.CurrentMode().hz} Hz. O jogo ainda está rodando.");
     }
 }

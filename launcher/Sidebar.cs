@@ -25,14 +25,14 @@ public partial class MainWindow
 
     void SidebarTexts()
     {
-        NavHome.Content = L("Accueil", "Home");
-        NavOptions.Content = L("Options", "Options");
-        Tip(FolderLink, L("Ouvrir le dossier du jeu", "Open the game folder"));
-        Tip(HelpLink, L("Aide et questions fréquentes", "Help and common questions"));
-        Tip(DiscordLink, L($"Rejoindre le serveur Discord de {Texts.Name}", $"Join the {Texts.Name} Discord server"));
-        Tip(ReportLink, L("Signaler un problème sur GitHub", "Report a problem on GitHub"));
-        Tip(ModsBadge, L("Des patchs de code sont à reconstruire ou sans effet : voir Mods.", "Some code patches need a build or have no effect: see Mods."));
-        UpdateLink.Content = L("Mettre à jour", "Update");
+        NavHome.Content = L("Accueil", "Home", "Pasta pessoal");
+        NavOptions.Content = L("Options", "Options", "Opções");
+        Tip(FolderLink, L("Ouvrir le dossier du jeu", "Open the game folder", "Abrir a pasta do jogo"));
+        Tip(HelpLink, L("Aide et questions fréquentes", "Help and common questions", "Ajuda e perguntas frequentes"));
+        Tip(DiscordLink, L($"Rejoindre le serveur Discord de {Texts.Name}", $"Join the {Texts.Name} Discord server", $"Entrar no servidor do Discord do {Texts.Name}"));
+        Tip(ReportLink, L("Signaler un problème sur GitHub", "Report a problem on GitHub", "Relatar um problema no GitHub"));
+        Tip(ModsBadge, L("Des patchs de code sont à reconstruire ou sans effet : voir Mods.", "Some code patches need a build or have no effect: see Mods.", "Alguns patches de código precisam de compilação ou não têm efeito: veja Mods."));
+        UpdateLink.Content = L("Mettre à jour", "Update", "Atualizar");
     }
 
     static void Tip(FrameworkElement e, string text) => e.ToolTip = new ToolTip { Style = St("Tip"), Content = text };
@@ -61,10 +61,10 @@ public partial class MainWindow
         StepList.Children.Clear();
         var names = new[]
         {
-            updating ? L("La mise à jour", "The update") : L("Votre copie", "Your copy"),
-            L("Construction", "Build"),
-            L("Shaders (1er lancement)", "Shaders (1st start)"),
-            L("Jouer", "Play"),
+            updating ? L("La mise à jour", "The update", "A atualização") : L("Votre copie", "Your copy", "A sua cópia"),
+            L("Construction", "Build", "Compilação"),
+            L("Shaders (1er lancement)", "Shaders (1st start)", "Shaders (1ª abertura)"),
+            L("Jouer", "Play", "Jogar"),
         };
         for (var i = 0; i < names.Length; i++)
         {
@@ -105,39 +105,39 @@ public partial class MainWindow
         switch (view)
         {
             case View.Install:
-                Card(L("Installation", "Install"));
+                Card(L("Installation", "Install", "Instalar"));
                 Steps(0);
                 UpdateLink.Visibility = Visibility.Collapsed;
                 MainButton.Visibility = Visibility.Visible;   // (Install, or Update ReLink: Install.cs RefreshMode)
                 break;
             case View.Build:
-                Card(updating ? L("Mise à jour", "Update") : L("Installation", "Install"), L("En cours", "Running"), Pill.Grey);
+                Card(updating ? L("Mise à jour", "Update", "Atualizar") : L("Installation", "Install", "Instalar"), L("En cours", "Running", "Em andamento"), Pill.Grey);
                 Steps(1);
-                MainNote.Text = CanBrowse ? L("Vous pouvez regarder les autres pages en attendant.", "You can look at the other pages meanwhile.") : "";
+                MainNote.Text = CanBrowse ? L("Vous pouvez regarder les autres pages en attendant.", "You can look at the other pages meanwhile.", "Enquanto isso, você pode ver as outras páginas.") : "";
                 UpdateLink.Visibility = Visibility.Collapsed;
                 MainButton.Visibility = Visibility.Collapsed;   // (the percentage and Cancel are the page's)
                 break;
             case View.Problem:
-                Card(updating ? L("Mise à jour", "Update") : L("Installation", "Install"), L("Arrêtée", "Stopped"), Pill.Red);
+                Card(updating ? L("Mise à jour", "Update", "Atualizar") : L("Installation", "Install", "Instalar"), L("Arrêtée", "Stopped", "Parado"), Pill.Red);
                 Steps(1, stopped: true);
                 MainNote.Text = "";
                 UpdateLink.Visibility = Visibility.Collapsed;
                 // (Repair is the card's when the tools are to repair; otherwise the page's Back and report are the way on)
                 MainButton.Visibility = repairable ? Visibility.Visible : Visibility.Collapsed;
-                MainButtonText.Text = L("Réparer", "Repair");
+                MainButtonText.Text = L("Réparer", "Repair", "Reparar");
                 MainButton.IsEnabled = true;
                 break;
             case View.Home when Browsing:
-                Card(updating ? L("Mise à jour", "Update") : L("Installation", "Install"), L("En cours", "Running"), Pill.Grey);
+                Card(updating ? L("Mise à jour", "Update", "Atualizar") : L("Installation", "Install", "Instalar"), L("En cours", "Running", "Em andamento"), Pill.Grey);
                 Steps(1);
                 UpdateLink.Visibility = Visibility.Collapsed;
                 MainButton.Visibility = Visibility.Visible;
-                MainButtonText.Text = L("Progression", "Progress");
+                MainButtonText.Text = L("Progression", "Progress", "Progresso");
                 MainButton.IsEnabled = true;
                 break;
             case View.Home:
                 MainButton.Visibility = hero ? Visibility.Collapsed : Visibility.Visible;
-                MainButtonText.Text = L("Jouer", "Play");
+                MainButtonText.Text = L("Jouer", "Play", "Jogar");
                 MainButton.IsEnabled = Game.Installed(s.Folder) && game == null;
                 break;
         }
@@ -148,22 +148,22 @@ public partial class MainWindow
     {
         if (version == null)
         {
-            Card(L("Version de dev", "Dev build"));   // (built from the sources: no release number)
+            Card(L("Version de dev", "Dev build", "Build de desenvolvimento"));   // (built from the sources: no release number)
             UpdateLink.Visibility = Visibility.Collapsed;
-            MainNote.Text = next != null ? L($"Dernière version publiée : {next}.", $"Latest release: {next}.") : "";
+            MainNote.Text = next != null ? L($"Dernière version publiée : {next}.", $"Latest release: {next}.", $"Última versão: {next}.") : "";
             return;
         }
         UpdateLink.Visibility = Visibility.Collapsed;
-        if (!@checked) { Card(version, L("Non vérifié", "Not checked"), Pill.Grey); return; }
-        if (next == null || next == version) { Card(version, L("À jour", "Up to date"), Pill.Good); return; }
-        Card(version, L($"{next} dispo", $"{next} out"), Pill.Gold);
+        if (!@checked) { Card(version, L("Non vérifié", "Not checked", "Não verificado"), Pill.Grey); return; }
+        if (next == null || next == version) { Card(version, L("À jour", "Up to date", "Atualizado"), Pill.Good); return; }
+        Card(version, L($"{next} dispo", $"{next} out", $"{next} disponível"), Pill.Gold);
         if (canUpdate)
         {
             UpdateLink.Visibility = Visibility.Visible;
             Tip(UpdateLink, L("La mise à jour garde vos sauvegardes, vos réglages et vos mods. Le jeu est reconstruit ; le prochain lancement peut préparer les shaders à nouveau.",
-                              "The update keeps your saves, settings and mods. The game is built again; the next start may prepare the shaders again."));
-            MainNote.Text = L("Garde vos sauvegardes, réglages et mods.", "Keeps your saves, settings and mods.");
+                              "The update keeps your saves, settings and mods. The game is built again; the next start may prepare the shaders again.", "A atualização mantém os seus saves, configurações e mods. O jogo é compilado de novo; a próxima abertura pode preparar os shaders de novo."));
+            MainNote.Text = L("Garde vos sauvegardes, réglages et mods.", "Keeps your saves, settings and mods.", "Mantém os seus saves, configurações e mods.");
         }
-        else MainNote.Text = L($"Installez de nouveau le jeu pour avoir la {next}.", $"Install the game again to get {next}.");
+        else MainNote.Text = L($"Installez de nouveau le jeu pour avoir la {next}.", $"Install the game again to get {next}.", $"Instale o jogo de novo para ter a {next}.");
     }
 }

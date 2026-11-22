@@ -10,6 +10,7 @@
    decoder exists (HOS_AV1_ASYNC=1 to prefer it: untested). HOS_VIDEO_LOG=1 logs the decoder chosen. */
 #define COBJMACROS
 #include "hos.h"
+#include "hos_lang.h"   /* (relink-amd: the boxes in Portuguese) */
 #include <windows.h>
 #include <shellapi.h>
 #include <initguid.h>
@@ -74,9 +75,12 @@ static int set_output_nv12(MfAv1 *m) {
    intro never ends. Said once, on its own thread (the game goes on), with the way to the Store page. HOS_AV1_MISSING=1: as if it were missing */
 static DWORD WINAPI av1_missing_notice(LPVOID unused) {
     (void)unused;
-    if (MessageBoxA(NULL, "ReLink's movies need Microsoft's free AV1 Video Extension, which this PC does not have. Without it they show a green "
-                          "screen and the game can stop at a black screen.\n\nOpen its Microsoft Store page now? Install it, then restart the game.",
-                    "Project ReLink", MB_YESNO | MB_ICONINFORMATION | MB_TOPMOST) == IDYES)
+    if (hos_box(HOS_T("ReLink's movies need Microsoft's free AV1 Video Extension, which this PC does not have. Without it they show a green "
+                      "screen and the game can stop at a black screen.\n\nOpen its Microsoft Store page now? Install it, then restart the game.",
+                      "Os vídeos do ReLink precisam da Extensão de Vídeo AV1 gratuita da Microsoft, que este PC não tem. Sem ela eles mostram "
+                      "uma tela verde e o jogo pode parar numa tela preta.\n\nAbrir a página dela na Microsoft Store agora? Instale e depois "
+                      "reinicie o jogo."),
+                "Project ReLink", MB_YESNO | MB_ICONINFORMATION | MB_TOPMOST) == IDYES)
         ShellExecuteA(NULL, "open", "ms-windows-store://pdp/?ProductId=9MVZQVXJBQ9V", NULL, NULL, SW_SHOWNORMAL);
     return 0;
 }

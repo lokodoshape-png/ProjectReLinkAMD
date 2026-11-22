@@ -2,6 +2,7 @@
    commit (TOTK commits its whole 4 GB window up front; MKW's 512 GB window is only reserved), and stand-ins for the
    hooks of files not taken into host/ (the renderer and display, the profiler, mods, TOTK's own patches). */
 #include "hos.h"
+#include "hos_lang.h"   /* (relink-amd: the boxes in Portuguese) */
 #include <stdio.h>
 #include <stdlib.h>
 #define WIN32_LEAN_AND_MEAN
@@ -55,12 +56,15 @@ void hos_commit(uint64_t addr, uint64_t size) {
 
 DWORD WINAPI hos_out_of_memory_box(LPVOID unused) {
     (void)unused;
-    MessageBoxA(NULL,
-                "Windows has run out of memory (RAM plus the page file), so ReLink may close.\n\n"
-                "Close other programs, and in Windows' System > About > Advanced system settings > Performance > Advanced > Virtual "
-                "memory, choose \"Automatically manage paging file size\" (or give it at least 16 GB). A lower Quality preset in the "
-                "Insert menu also uses less memory.",
-                "Project ReLink: out of memory", MB_OK | MB_ICONWARNING | MB_TOPMOST);
+    hos_box(HOS_T("Windows has run out of memory (RAM plus the page file), so ReLink may close.\n\n"
+                  "Close other programs, and in Windows' System > About > Advanced system settings > Performance > Advanced > Virtual "
+                  "memory, choose \"Automatically manage paging file size\" (or give it at least 16 GB). A lower Quality preset in the "
+                  "Insert menu also uses less memory.",
+                  "O Windows ficou sem memória (RAM mais o arquivo de paginação), então o ReLink pode fechar.\n\n"
+                  "Feche outros programas e, no Windows, em Sistema > Sobre > Configurações avançadas do sistema > Desempenho > Avançado > "
+                  "Memória virtual, escolha \"Gerenciar automaticamente o tamanho do arquivo de paginação\" (ou dê pelo menos 16 GB). Uma "
+                  "Predefinição de qualidade mais baixa no menu Insert também usa menos memória."),
+            HOS_T("Project ReLink: out of memory", "Project ReLink: sem memória"), MB_OK | MB_ICONWARNING | MB_TOPMOST);
     return 0;
 }
 
