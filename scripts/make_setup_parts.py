@@ -73,7 +73,7 @@ def main():
         sys.exit("not a ReLink package folder: %s" % root)
     # (the parts live in one release of their own, named by their checksum: a part that did not change is not uploaded again, and a
     # release itself holds only ReLink.exe (the setup) and the list it reads)
-    base = (a.base or "https://github.com/pixl27/ProjectReLink/releases/download/builder-parts").rstrip("/")
+    base = (a.base or "https://github.com/lokodoshape-png/ProjectReLinkAMD/releases/download/builder-parts").rstrip("/")
     os.makedirs(a.out, exist_ok=True)
     with open(os.path.join(root, "tools", "version.txt"), "w", newline="\n") as f:
         f.write(a.tag + "\n")

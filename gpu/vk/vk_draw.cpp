@@ -62,6 +62,28 @@ struct PointerEntry { uint64_t addr, size; };
 const PointerEntry* pointer_table(const NvnState& s, int stage);
 uint32_t stage_cbuf_word(const NvnState& s, const Stage& st, uint32_t index, uint32_t offset);   // (vk_shader.cpp)
 uint64_t sampler_registrations_generation();   // (vk_bank.cpp: sampler_for's cache)
+/// (relink-amd) The RAM free now, in MB (0: not known)
+uint64_t ram_available_mb() {
+#ifdef _WIN32
+    MEMORYSTATUSEX ms{};
+    ms.dwLength = sizeof ms;
+    return GlobalMemoryStatusEx(&ms) ? (uint64_t)(ms.ullAvailPhys >> 20) : 0;
+#else
+    uint64_t kb = 0;
+    if (FILE* f = fopen("/proc/meminfo", "r")) {
+        char line[128];
+        while (fgets(line, sizeof line, f))
+            if (sscanf(line, "MemAvailable: %llu kB", (unsigned long long*)&kb) == 1) break;
+        fclose(f);
+    }
+    return kb >> 10;
+#endif
+}
+/// (relink-amd) The start's phases in the log with the RAM free at that moment: "vk: start phase <what>: <MB> MB of RAM free"
+void log_phase_ram(const char* what) {
+    logf("vk: start phase %s: %llu MB of RAM free, %u CPU threads", what, (unsigned long long)ram_available_mb(),
+         std::max(1u, std::thread::hardware_concurrency()));
+}
 namespace {
 // ---- (relink) this file's per-thread objects that need a constructor or a destructor ----
 // With llvm-mingw every use of such a thread_local calls the file's TLS init function, which saves registers, finds the
@@ -1268,12 +1290,26 @@ void state_record(const Program& p, const NvnState& s, const Targets& at, VkPrim
 /// RX_VK_PREPARE_THREADS=<n>, else every CPU thread but one, at most 32. They were half of them, for the PC's sake (on all of them
 /// at High the driver's compiles froze it); they run below normal, so the loading screen and the desktop still get the CPU they
 /// ask for, and the half left idle made a 4-thread PC's first start twice as long
+/// (relink-amd) How many threads the start may give to work that builds pipelines in the driver or translates programs: every CPU
+/// thread but one (as before), and no more than the free RAM holds at RX_VK_PREPARE_MB_PER_THREAD each (default 768; 0: no RAM
+/// limit, as before 0.7.9.3). A driver's compile takes hundreds of MB while it runs; on a 16 GB PC with 15 of them at once and the
+/// game's own ~10 GB the system pages to disk and every compile is many times slower. RX_VK_PREPARE_THREADS=<n> decides alone
+unsigned start_threads(const char* phase) {
+    const unsigned cpus = std::max(1u, std::thread::hardware_concurrency());
+    if (const char* e = getenv("RX_VK_PREPARE_THREADS"); e && atoi(e) > 0) return std::min((unsigned)atoi(e), 64u);
+    const unsigned by_cpu = std::clamp(cpus > 1 ? cpus - 1 : 1u, 1u, 32u);
+    static const int per = getenv("RX_VK_PREPARE_MB_PER_THREAD") ? std::max(0, atoi(getenv("RX_VK_PREPARE_MB_PER_THREAD"))) : 768;
+    const uint64_t free_mb = per ? ram_available_mb() : 0;
+    unsigned n = by_cpu;
+    if (per && free_mb) n = std::clamp((unsigned)std::min<uint64_t>(free_mb / (uint64_t)per, 64), 2u, by_cpu);
+    static std::atomic<int> told{0};
+    if (told++ < 12)
+        logf("vk: %s: %u threads (%u CPU threads, %llu MB of RAM free, %d MB a thread; RX_VK_PREPARE_THREADS, "
+             "RX_VK_PREPARE_MB_PER_THREAD=0: other)", phase, n, cpus, (unsigned long long)free_mb, per);
+    return std::max(1u, std::min(n, by_cpu));
+}
 unsigned prepare_threads() {
-    static const unsigned n = [] {
-        const unsigned cpus = std::max(1u, std::thread::hardware_concurrency());
-        if (const char* e = getenv("RX_VK_PREPARE_THREADS"); e && atoi(e) > 0) return std::min((unsigned)atoi(e), 64u);
-        return std::clamp(cpus > 1 ? cpus - 1 : 1u, 1u, 32u);
-    }();
+    static const unsigned n = start_threads("shader preparation");
     return n;
 }
 /// (prepare_run, the seed open) every pipeline of the state lists (the player's own and the shipped one): its program translated
@@ -7850,8 +7886,17 @@ std::string warm_marker_now() {
 // (RTX 3060 Ti): from the cache, a median of 1.5 to 2.7 ms and 8.5 ms at most; compiled, a median of 63 ms (3 ms called a warm
 // cache cold once, hs2997: 5 s of warm-up for nothing). Warm, the probe costs kProbe pipelines from the cache and their programs
 // read (0.1 s). RX_VK_WARM_PROBE_MS=0: no probe (the marker alone, as before)
-bool driver_cache_lost(const std::vector<std::unique_ptr<PipeNote>>& notes) {
-    static const double limit_ms = getenv("RX_VK_WARM_PROBE_MS") ? atof(getenv("RX_VK_WARM_PROBE_MS")) : 12.0;
+//
+// (relink-amd) The 12 ms are NVIDIA's (the bench's RTX 3060 Ti). Another driver can take longer to give a pipeline from its cache
+// (AMD's reads and checks its cache file), and every start then read as "lost" and warmed again: the shader preparation on each
+// start that AMD players report (issues 151, 173). So each whole warm-up ends with the same probe, the cache warm for sure, and
+// its median goes in the marker's second line ("probe_ms"); the next starts call the cache lost over 4 times that median (12 ms
+// at the least). RX_VK_WARM_PROBE_MS set: that limit, as before. measure: only the median, no decision (median_out)
+bool driver_cache_lost(const std::vector<std::unique_ptr<PipeNote>>& notes, double learned_ms = 0, double* median_out = nullptr,
+                       bool measure = false) {
+    static const char* const probe_env = getenv("RX_VK_WARM_PROBE_MS");
+    double limit_ms = probe_env ? atof(probe_env) : 12.0;
+    if (!probe_env && learned_ms > 0) limit_ms = std::max(12.0, learned_ms * 4.0);
     if (limit_ms <= 0 || notes.empty()) return false;
     constexpr size_t kProbe = 16;
     const size_t n = notes.size(), step = std::max<size_t>(1, n / kProbe),
@@ -7882,10 +7927,17 @@ bool driver_cache_lost(const std::vector<std::unique_ptr<PipeNote>>& notes) {
     }
     std::sort(ms.begin(), ms.end());
     const double med = ms[ms.size() / 2];
+    if (median_out) *median_out = med;
+    if (measure) {
+        logf("vk: the driver's cache measured warm: %zu pipelines, median %.2f ms, longest %.2f ms (the next starts' probe: lost over "
+             "%.1f ms)", ms.size(), med, ms.back(), std::max(12.0, med * 4.0));
+        return false;
+    }
     const size_t cold = (size_t)(ms.end() - std::upper_bound(ms.begin(), ms.end(), limit_ms));
     const bool lost = cold * 4 >= ms.size();
-    logf("vk: the driver's cache probed: %zu pipelines in %.2f s, median %.2f ms, longest %.2f ms, %zu over %.1f ms: %s", ms.size(),
+    logf("vk: the driver's cache probed: %zu pipelines in %.2f s, median %.2f ms, longest %.2f ms, %zu over %.1f ms (%s): %s", ms.size(),
          std::chrono::duration<double>(std::chrono::steady_clock::now() - t0).count(), med, ms.back(), cold, limit_ms,
+         probe_env ? "RX_VK_WARM_PROBE_MS" : learned_ms > 0 ? "4x this PC's warm median" : "the default",
          lost ? "it no longer has them, warmed again" : "warm");
     return lost;
 }
@@ -7896,13 +7948,17 @@ size_t warm_run(void (*progress)(size_t done, size_t total), size_t after) {
     if (sw && !atoi(sw)) return 0;
     const std::string now = warm_marker_now(), path = warm_marker_path();
     bool marked = false;
+    double learned_ms = 0;   // (relink-amd: the marker's second line, "probe_ms <median>": driver_cache_lost)
     if (!sw) {
-        char had[MAX_PATH + 128] = "";
+        char had[MAX_PATH + 192] = "";
         if (FILE* f = fopen(path.c_str(), "rb")) {
             const size_t n = fread(had, 1, sizeof had - 1, f);
             fclose(f);
             had[n] = 0;
-            if (char* end = strpbrk(had, "\r\n")) *end = 0;
+            if (char* end = strpbrk(had, "\r\n")) {
+                *end = 0;
+                if (const char* second = strstr(end + 1, "probe_ms ")) learned_ms = atof(second + 9);
+            }
         }
         marked = now == had;
     }
@@ -7910,7 +7966,7 @@ size_t warm_run(void (*progress)(size_t done, size_t total), size_t after) {
     const std::vector<std::unique_ptr<PipeNote>> notes = pipe_notes_read();
     if (notes.empty()) return 0;   // (nothing noted yet: play notes them, and the driver's cache has them from their first draw)
     if (marked) {
-        if (!driver_cache_lost(notes)) return 0;
+        if (!driver_cache_lost(notes, learned_ms)) return 0;
         remove(path.c_str());   // (a warm-up cut short is not marked: the next start warms again without a probe)
     }
     // (the notes' programs read in one pass, as the full precompile reads them: borrowing each from the file for its pipelines,
@@ -7956,7 +8012,8 @@ size_t warm_run(void (*progress)(size_t done, size_t total), size_t after) {
     // kept the progress going, slowly, so the stall rule never fired and the warm-up spent its whole budget at a quarter speed)
     static const int pipe_s = getenv("RX_VK_WARM_PIPE_S") ? atoi(getenv("RX_VK_WARM_PIPE_S")) : 60;
     const unsigned cpus = std::max(1u, std::thread::hardware_concurrency());
-    const unsigned nthreads = std::min(cpus, 64u), slots = nthreads * 4;   // (room for the workers that replace stuck ones)
+    // (relink-amd: as many as the RAM free holds, start_threads; every CPU thread before)
+    const unsigned nthreads = std::min({cpus, 64u, start_threads("driver cache warm-up")}), slots = nthreads * 4;   // (room for the workers that replace stuck ones)
     w->current.reset(new std::atomic<int64_t>[slots]);
     w->since.reset(new std::atomic<int64_t>[slots]);
     for (unsigned k = 0; k < slots; k++) w->current[k] = -1, w->since[k] = 0;
@@ -8044,8 +8101,15 @@ size_t warm_run(void (*progress)(size_t done, size_t total), size_t after) {
              "starts leave them out%s", stuck_keys.size(), stuck_keys.size() == 1 ? "" : "s", stuck_names.c_str(),
              out_of_time ? " (the warm-up's time budget, RX_VK_WARM_S, ran out)" : stalled ? " (nothing finished for RX_VK_WARM_STALL_S)" : "");
     const bool whole = !prepare_stopped() && !out_of_time && !stalled && all_out && stuck_keys.empty();
-    if (whole)
-        if (FILE* f = fopen(path.c_str(), "wb")) fprintf(f, "%s\n", now.c_str()), fclose(f);
+    if (whole) {
+        double warm_ms = 0;   // (relink-amd: the cache's own speed when warm, for the next starts' probe)
+        driver_cache_lost(w->notes, 0, &warm_ms, true);
+        if (FILE* f = fopen(path.c_str(), "wb")) {
+            fprintf(f, "%s\n", now.c_str());
+            if (warm_ms > 0) fprintf(f, "probe_ms %.3f\n", warm_ms);
+            fclose(f);
+        }
+    }
     logf("vk: warmed the driver's cache: %zu of %zu noted pipelines made in %.1f s (%.1f s of it %zu programs read)%s",
          w->made.load(), notes.size(), std::chrono::duration<double>(std::chrono::steady_clock::now() - t0).count(), read_s,
          programs_n, whole ? "" : " (stopped before the end: the rest are made in play, and the next start goes on)");
@@ -8206,7 +8270,8 @@ void precompile_run(void (*progress)(size_t done, size_t total)) {
     };
     std::vector<std::thread> threads;
     const unsigned cpus = std::max(1u, std::thread::hardware_concurrency());
-    for (unsigned i = 0; i < std::min(cpus, 64u); i++) threads.emplace_back(worker);
+    // (relink-amd: as many as the RAM free holds, start_threads; every CPU thread before)
+    for (unsigned i = 0; i < std::min({cpus, 64u, start_threads("pipelines before the game")}); i++) threads.emplace_back(worker);
     static const int stall_s = getenv("RX_VK_PRECOMPILE_STALL_S") ? atoi(getenv("RX_VK_PRECOMPILE_STALL_S")) : 30;
     size_t last_done = 0;
     auto last_change = std::chrono::steady_clock::now();

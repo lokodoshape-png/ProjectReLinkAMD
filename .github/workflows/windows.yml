@@ -69,6 +69,8 @@ jobs:
           echo "VERSION=${tag#v}" >> "$GITHUB_ENV"
           echo "version: $tag"
 
+      # (ProjectReLinkAMD: with no release of its own yet, the tool parts and play profile come from upstream's, pixl27/ProjectReLink,
+      # repacked under this repository's name by `adopt`; BOOTSTRAP_REPO names another)
       # (the list of the newest stable release other than this tag: its tool parts, its prebuilt third_party files and its play
       # profile. A release must have one; any other run goes on without, and its package then has only the app and .NET parts)
       - name: The latest release's setup list
@@ -80,7 +82,7 @@ jobs:
         run: |
           mkdir -p dist
           if python -I scripts/release_parts.py previous "$RUNNER_TEMP/found-setup.txt" \
-              --repo "$GITHUB_REPOSITORY" ${BOOTSTRAP_REPO:+--repo "$BOOTSTRAP_REPO"} \
+              --repo "$GITHUB_REPOSITORY" --repo "${BOOTSTRAP_REPO:-pixl27/ProjectReLink}" \
               --list-name relink-setup.txt ${BOOTSTRAP_LIST:+--list-name "$BOOTSTRAP_LIST"} \
               ${SEED_LIST:+--seed "$SEED_LIST"} --skip-tag "$TAG"; then
             # (tool parts made under another name are repacked under this one, into dist: they are this repository's from then on)
