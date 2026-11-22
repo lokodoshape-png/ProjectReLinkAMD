@@ -104,6 +104,19 @@
       "defaults": { "v-sync": "0" }
     },
     {
+      "id": "lossless_scaling", "label": "Lossless Scaling", "group": "Smoothness",
+      "help": "Prepares the picture for the Lossless Scaling app over the game. LSFG: no frames made by the game itself, each frame shown once. Your other settings are kept and come back with Off.",
+      "choices": [
+        { "label": "Off", "set": { "lossless_scaling": "0" } },
+        { "label": "LS Scaling", "set": { "lossless_scaling": "1" } },
+        { "label": "LSFG", "set": { "lossless_scaling": "2" } },
+        { "label": "LSFG + Scaling", "set": { "lossless_scaling": "3" } },
+        { "label": "LS Performance", "set": { "lossless_scaling": "4" } },
+        { "label": "LS Max Compatibility", "set": { "lossless_scaling": "5" } }
+      ],
+      "defaults": { "lossless_scaling": "0" }
+    },
+    {
       "id": "frame_generation", "label": "Frame generation", "group": "Smoothness",
       "help": "Makes frames between the game's own, for smoother motion, at a little input delay. Fast motion or camera cuts can show artifacts.",
       "choices": [

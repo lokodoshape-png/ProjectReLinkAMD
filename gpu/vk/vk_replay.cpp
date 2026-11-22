@@ -35,6 +35,7 @@
 #include "vk_gprof.h"
 #include "vk_framegen.h"
 #include "hdr_out.h"   // (relink: the F12 screenshot of an HDR picture)
+#include "ls_compat.h"   // (relink-amd: the Lossless Scaling mode)
 #include "vk_menu.h"
 #include "oot_cheat_items.h"   // (relink: OOT_CHEAT_ITEM_BASE, OOT_CHEAT_AGE_ID: the item wheel's counts and pages)
 #include "oot_wheel_state.h"   // (relink: the Item wheel and Cycle items rows' option ids)
@@ -3992,6 +3993,19 @@ void present_image(VkImage src, uint32_t sw, uint32_t sh, const int crop[4], VkI
         const bool cropped = crop && crop[2] > 0 && crop[3] > 0;
         menu_note_present_sizes(cropped ? (uint32_t)crop[2] : sw, cropped ? (uint32_t)crop[3] : sh, dev.swap_extent.width,
                                 dev.swap_extent.height);
+        // (relink-amd) the Lossless Scaling mode's scaling (ls_compat.h): the picture should reach the window 1:1, LS doing the one
+        // scaling. Said once for each pair of sizes that differ: the plain copy scales it here first
+        if (!ls_effective().window_filter) {
+            const uint32_t pw = cropped ? (uint32_t)crop[2] : sw, ph = cropped ? (uint32_t)crop[3] : sh;
+            static uint64_t told;
+            const uint64_t pair = (uint64_t)pw << 48 | (uint64_t)ph << 32 | dev.swap_extent.width << 16 | dev.swap_extent.height;
+            if (pair != told && (pw != dev.swap_extent.width || ph != dev.swap_extent.height)) {
+                told = pair;
+                logf("ls: the picture is %ux%u and the window %ux%u: it is scaled to the window before Lossless Scaling scales it "
+                     "again. For one scaling, make the window the picture's size (HOS_WINDOW_SIZE, Output resolution)", pw, ph,
+                     dev.swap_extent.width, dev.swap_extent.height);
+            }
+        }
     }
     menu_tick();
     // (relink) The "30, smooth" frame rate (low_cap_repeats, vk_main.cpp): the game's frame presented that many times on the
