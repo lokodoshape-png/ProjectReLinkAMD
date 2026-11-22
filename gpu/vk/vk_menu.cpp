@@ -16,6 +16,7 @@
 // (relink, issue 32) The Gameplay tab's Quit game asks the same way (Back, the default, or Quit); Quit saves the options
 // and the pipeline cache as Restart now does and closes the window as the player would, and the game exits (WM_APP + 10:
 // host/display.c, host/posix/display_sdl.c). The launcher puts the display's refresh rate back when the game's process ends.
+#include <array>
 #include <atomic>
 #include <chrono>
 #include <condition_variable>
@@ -47,6 +48,7 @@
 #include "vk_dlss.h"
 #include "vk_fsr.h"
 #include "vk_reflex.h"
+#include "ls_compat.h"   // (relink-amd: the Lossless Scaling row)
 #include "upscaler_rows.h"
 #include "menu_restart.h"
 #ifndef RELINK_VERSION   // (nx2/build.py gives it to this file: nx2/version.py)
@@ -466,6 +468,14 @@ const char* hn_framegen(int v, int variant) {
              : v == 5 ? "Four made frames" : v == 6 ? "Five made frames" : v == 7 ? "Six made frames" : "Seven made frames");
     return b[std::clamp(v, 2, 8)];
 }
+// (relink-amd) the Lossless Scaling row (ls_compat.h, docs/lossless_scaling.md)
+const char* tx_lossless(int v) { return ls_profile_name(v); }
+MENU_HINTS(hn_lossless, 0, "The game as without Lossless Scaling.",
+           "For LS's scaling: the picture goes to the window as it is. Use a window smaller than the screen.",
+           "For LS's frame generation: no frames made here, each frame presented once.",
+           "For LS's frame generation and scaling together.",
+           "As LSFG + Scaling, with the least delay: presents not in step with the display.",
+           "As LSFG + Scaling, the most predictable: every present in step with the display. Fast sync applies after a restart.")
 MENU_HINTS(hn_pace, 0, "As soon as it is ready.", "At an even interval: less stutter, at up to one frame of delay.")
 MENU_HINTS(hn_vsync, 0, "Each frame is shown as soon as it is ready: the least delay. Where the driver has no mailbox mode "
            "(AMD's on Windows), a line can tear across the picture.",
@@ -574,6 +584,9 @@ Row rows[] = {
      "Shows each frame in step with the display's refresh, so the picture never tears. Applies at once.", hn_vsync, false, true},
     {TAB_GRAPHICS, "Low latency", &opts.reflex, 0, 2, 1, tx_reflex,
      "NVIDIA Reflex / AMD Anti-Lag 2: starts each frame as late as it can, for less input delay. Not used with frame generation.", hn_reflex},
+    {TAB_GRAPHICS, "Lossless Scaling", &opts.ls_profile, 0, LS_COUNT - 1, 1, tx_lossless,   // (relink-amd: ls_compat.h)
+     "Prepares the picture for the Lossless Scaling app over the game. Your other rows are kept and come back with Off.",
+     hn_lossless, false, true},
     // (the picture's way, top to bottom: the output's size, what fills it from the 3D, the 3D's size, then the window)
     {TAB_GRAPHICS, "Output resolution", &opts.output_res, 0, kLastOutput, 1, tx_output_res,
      "The game's whole frame, HUD included, before it is scaled to the window. Docked only. Applies after a restart.",
@@ -839,6 +852,7 @@ const char* row_group(int i, int* place) {
         {"Upscaler", "UPSCALING", 2}, {"DLSS model", "UPSCALING", 2}, {"Render resolution", "UPSCALING", 2},
         {"Window scaling filter", "UPSCALING", 2}, {"Sharpness", "UPSCALING", 2},
         {"Frame generation", "SMOOTHNESS", 3}, {"Frame pacing", "SMOOTHNESS", 3}, {"V-Sync", "SMOOTHNESS", 3}, {"Low latency", "SMOOTHNESS", 3},
+        {"Lossless Scaling", "SMOOTHNESS", 3},
         {"Robust buffers", "ADVANCED", 4},
         {"Volume", "SOUND", 1}, {"Audio output", "SOUND", 1}, {"Microphone", "SOUND", 1},
         {"Item wheel", "ITEMS", 2}, {"Cycle items", "ITEMS", 2},
@@ -3195,6 +3209,57 @@ void menu_init() {
     restart_init();   // (what this run started with: the rows that take a restart differ from it once changed)
 }
 
+// (relink-amd) The Lossless Scaling mode in effect (ls_compat.h): RX_VK_LOSSLESS_SCALING over the row, never written to the
+// options file, so taking the variable away gives the row's choice back. Worked out again only when the profile changes
+namespace {
+int ls_env_profile() {
+    static const int p = [] {
+        const char* e = getenv("RX_VK_LOSSLESS_SCALING");
+        const int v = ls_parse_profile(e);
+        if (e && *e && v < 0) logf("ls: RX_VK_LOSSLESS_SCALING=%s is not a profile (0-5, off, scaling, lsfg, lsfg_scaling, performance, compat): the row decides", e);
+        return v;
+    }();
+    return p;
+}
+int ls_profile_now() {
+    const int env = ls_env_profile();
+    return env >= 0 ? env : std::clamp(opts.ls_profile, 0, LS_COUNT - 1);
+}
+const char* ls_fse_text(int f) { return f == LS_FSE_DISALLOW ? "disallowed" : f == LS_FSE_ALLOW ? "allowed" : "driver's choice"; }
+const char* ls_present_text(int p) { return p == LS_PRESENT_FIFO ? "fifo" : p == LS_PRESENT_IMMEDIATE ? "immediate" : "as V-Sync has it"; }
+}  // namespace
+int ls_start_profile() {
+    static const int p = ls_profile_now();   // (asked first when the instance is made: the options file is read by then)
+    return p;
+}
+bool ls_fast_sync_default() {
+    menu_init();   // (asked when the game first submits: the options file is read by then, but once more costs nothing)
+    return ls_start_profile() == LS_OFF || ls_resolve(ls_start_profile(), [](const char* n) { return getenv(n); }).fast_sync;
+}
+const LsEffective& ls_effective() {
+    // (every profile's parts worked out once, the RX_VK_LS_* variables being read once: what is handed out is never written again,
+    // so the presenting, replay and frame generation threads read it with no lock)
+    static const std::array<LsEffective, LS_COUNT> all = [] {
+        std::array<LsEffective, LS_COUNT> a{};
+        for (int p = 0; p < LS_COUNT; p++) a[p] = ls_resolve(p, [](const char* n) { return getenv(n); });
+        return a;
+    }();
+    static std::atomic<int> told{-1};
+    const int p = ls_profile_now();
+    const LsEffective& e = all[p];
+    const int was = told.exchange(p, std::memory_order_relaxed);
+    if (was != p && (p != LS_OFF || was != -1)) {   // (Off from the start: nothing said)
+        char images[16];
+        snprintf(images, sizeof images, "%d", e.images);
+        logf("ls: Lossless Scaling mode %s%s: internal frame generation %s, window filter %s, repeated presents %s, exclusive "
+             "fullscreen %s, presents %s, swapchain images %s, fast sync %s", ls_profile_name(p),
+             ls_env_profile() >= 0 ? " (RX_VK_LOSSLESS_SCALING)" : "", e.internal_fg ? "allowed" : "off",
+             e.window_filter ? "allowed" : "off (1:1)", e.repeats ? "allowed" : "off", ls_fse_text(e.fse),
+             ls_present_text(e.present), e.images ? images : "as before", e.fast_sync ? "as before" : "off (after a restart)");
+    }
+    return e;
+}
+
 bool resolution_auto() { return opts.resolution == 0; }
 int resolution_scale() {
     const float s = upscaler_rows::percent(opts.resolution) / 100.0f;
@@ -3384,6 +3449,15 @@ void menu_tick() {
         else if (opts.vsync != applied && dev.swap_extent.width && dev.swap_extent.height) {
             applied = opts.vsync;
             logf("menu: V-Sync %s", opts.vsync ? "on" : "off");
+            dev.swap_resize.store((uint64_t)dev.swap_extent.width << 32 | dev.swap_extent.height, std::memory_order_release);
+        }
+    }
+    {   // (relink-amd) the Lossless Scaling row changed: the swapchain made again at its next present (present mode, images)
+        static int applied = -1;
+        const int now = ls_effective().profile;
+        if (applied < 0) applied = now;
+        else if (now != applied && dev.swap_extent.width && dev.swap_extent.height) {
+            applied = now;
             dev.swap_resize.store((uint64_t)dev.swap_extent.width << 32 | dev.swap_extent.height, std::memory_order_release);
         }
     }

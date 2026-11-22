@@ -22,6 +22,7 @@
 #include "vk_framegen.h"
 #include "vk_menu.h"
 #include "vk_texture.h"
+#include "ls_compat.h"   // (relink-amd: the Lossless Scaling mode)
 #include "vk_wheel.h"   // (relink: the item wheel's picture, laid over its backdrop)
 #include <sirit/sirit.h>   // (relink: the item wheel's passes, built at run time)
 
@@ -572,11 +573,15 @@ bool framegen_wanted(int menu_value, int allow) {
 
 bool framegen_on() {
     static const int allow = !getenv("RX_VK_FRAMEGEN") || atoi(getenv("RX_VK_FRAMEGEN")) != 0;
-    return framegen_wanted(opts.framegen, allow) && !dev.offscreen && !fg.failed;
+    // (relink-amd) a Lossless Scaling profile that makes LS's frames (LSFG) leaves ours off: LS would make frames between made
+    // ones. The row keeps its value, and the frames come back with the profile Off (ls_compat.h)
+    return framegen_wanted(opts.framegen, allow) && !dev.offscreen && !fg.failed && ls_effective().internal_fg;
 }
 
 VkImage framegen_scale(VkCommandBuffer cmd, VkImageView src, VkImage image, uint32_t sw, uint32_t sh, const int crop[4], uint32_t dw, uint32_t dh) {
     if (!opts.upscale && !opts.sharpness) return VK_NULL_HANDLE;
+    // (relink-amd) LS scales the window itself: one scaling, LS's, not this filter's and then LS's (ls_compat.h)
+    if (!ls_effective().window_filter) return VK_NULL_HANDLE;
     if (!src || !image || !sw || !sh || !dw || !dh) return VK_NULL_HANDLE;
     if (crop && crop[2] > 0 && crop[3] > 0 &&
         (crop[0] < 0 || crop[1] < 0 || (uint32_t)crop[0] >= sw || (uint32_t)crop[1] >= sh)) return VK_NULL_HANDLE;

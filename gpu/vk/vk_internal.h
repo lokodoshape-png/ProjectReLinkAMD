@@ -191,8 +191,11 @@ bool memory_is_meter(uint64_t guest);
 ///   RX_VK_CAPTURE_WAIT_WHO (2 with it)  the presenting thread's captures do not wait
 /// On by default on every card (the maintainer's choice of 19/11; measured and watched on NVIDIA only: on AMD and Intel
 /// cards nobody has looked at it yet). RX_VK_FAST_SYNC=0 turns it off.
+/// (relink-amd) The Lossless Scaling mode's LS Max Compatibility profile, started with, leaves it off by default (the old wait,
+/// the one checked on every card): vk_menu.cpp ls_fast_sync_default. RX_VK_FAST_SYNC still wins
+bool ls_fast_sync_default();
 inline bool fast_sync_all() {
-    static const bool all = getenv("RX_VK_FAST_SYNC") ? atoi(getenv("RX_VK_FAST_SYNC")) != 0 : true;
+    static const bool all = getenv("RX_VK_FAST_SYNC") ? atoi(getenv("RX_VK_FAST_SYNC")) != 0 : ls_fast_sync_default();
     return all;
 }
 inline bool fast_sync_part(const char* name) {

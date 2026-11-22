@@ -80,11 +80,19 @@ struct Options {
     int mic = 1;          // (relink) the ocarina's microphone: 0 Off, 1 the system's default, 2.. a device as host->mic_name lists it (host/nn_audio_in.c)
     int framerate = 0;    // 0: the game's 60 fps; 1: unlocked, up to the display's refresh, game time following the clock (host/nn_vi.c)
     int item_wheel = 0;   // (relink) R or L held shows the item row as a wheel (host/oot_wheel.c, vk_wheel.cpp); HOS_ITEM_WHEEL over it
+    int ls_profile = 0;   // (relink-amd) Lossless Scaling compatibility: 0 Off, 1 LS Scaling, 2 LSFG, 3 LSFG + Scaling, 4 LS
+                          // Performance, 5 LS Max Compatibility (ls_compat.h; RX_VK_LOSSLESS_SCALING over it, the variable never saved)
     int cycle_items = 0;  // (relink) a tap of R or L changes the ZR item: 0 off (the default: R and L as the game has them),
                           // 1 Last used (the item on ZR before this one), 2 Basic, 3 +Bombs, 4 +Tools (within the ZR item's
                           // group; host/oot_wheel.c cycle_level)
 };
 extern Options opts;
+/// (relink-amd, ls_compat.h) The Lossless Scaling compatibility mode in effect now: RX_VK_LOSSLESS_SCALING when set, else the
+/// menu's row, with the RX_VK_LS_* parts over it. Off (the default) is the renderer as before
+struct LsEffective;
+const LsEffective& ls_effective();
+/// The profile the renderer started with (the parts that apply after a restart: the exclusive fullscreen extension, fast sync)
+int ls_start_profile();
 /// (vk_memory.cpp) true when the quality preset's memory budgets (vram_mb, mirror_mb) are to be used: the card has no more
 /// video memory than the preset is for. A 4GB preset on an 8 GB card kept 256 MB of mirrors and 2.2 GB of textures: the
 /// game's memory was read over PCIe and the textures made again every frame, 5 fps with the CPU idle (Discord, 11-08)

@@ -26,6 +26,7 @@
 #include "vk_fsr.h"
 #include "vk_reflex.h"
 #include "vk_progress.h"
+#include "ls_compat.h"   // (relink-amd: the Lossless Scaling mode)
 #ifdef _WIN32
 #include <dxgi1_6.h>   // (relink: HDR output, hdr_display)
 #endif
@@ -88,6 +89,10 @@ void logf(const char* fmt, ...) {
 bool hdr_ext = false;
 std::atomic<int> hdr_state{0}, hdr_peak{0};
 bool hdr_display(float* peak);
+// (relink-amd) VK_EXT_full_screen_exclusive for the Lossless Scaling mode (ls_compat.h): its instance part
+// (VK_KHR_get_surface_capabilities2) and its device part, enabled only when the run starts with a Lossless Scaling profile, so
+// that Off enables nothing new. With it, the swapchain tells the driver not to present the window exclusively
+bool fse_instance_ext = false, fse_device_ext = false;
 
 namespace {
 
@@ -200,6 +205,13 @@ bool create_instance() {
         std::vector<VkExtensionProperties> all(n);
         vkEnumerateInstanceExtensionProperties(nullptr, &n, all.data());
         dlss_instance_extensions(ext_list, all);
+#ifdef _WIN32
+        menu_init();   // (the options file, once: the Lossless Scaling row)
+        if (ls_start_profile() != LS_OFF && ls_effective().fse != LS_FSE_DEFAULT) {
+            fse_instance_ext = has_extension(all, VK_KHR_GET_SURFACE_CAPABILITIES_2_EXTENSION_NAME);
+            if (fse_instance_ext) ext_list.push_back(VK_KHR_GET_SURFACE_CAPABILITIES_2_EXTENSION_NAME);
+        }
+#endif
         // (relink) HDR: the colour spaces of the ST 2084 swapchain, only when the HDR row is on (nothing changes otherwise)
         if (hdr_wanted()) {
             hdr_ext = has_extension(all, VK_EXT_SWAPCHAIN_COLOR_SPACE_EXTENSION_NAME);
@@ -398,6 +410,13 @@ bool create_device() {
          has_extension(exts, VK_NV_DEVICE_DIAGNOSTIC_CHECKPOINTS_EXTENSION_NAME) ? (dev.checkpoints ? "yes, on" : "yes, off") : "no",
          dev.device_fault ? "yes (RX_VK_FAULT_INFO=1)" : "no");
     optional(VK_KHR_COOPERATIVE_MATRIX_EXTENSION_NAME, dev.coop_matrix);
+#ifdef _WIN32
+    if (fse_instance_ext) {   // (relink-amd: the Lossless Scaling mode's exclusive fullscreen choice, create_swapchain)
+        optional(VK_EXT_FULL_SCREEN_EXCLUSIVE_EXTENSION_NAME, fse_device_ext);
+        logf("vk: Lossless Scaling mode: VK_EXT_full_screen_exclusive %s", fse_device_ext ? "on (the window is never presented "
+             "exclusively)" : "not offered by this driver: the driver chooses, as without the mode");
+    }
+#endif
     dlss_device_extensions(want, exts);   // (relink: NVIDIA DLSS's, vk_dlss.cpp)
     fsr_device_extensions(want, exts);    // (relink: what AMD FSR's runtime takes by name, vk_fsr.cpp)
     reflex_device_extensions(want, exts);   // (relink: NVIDIA Reflex's, vk_reflex.cpp)
@@ -757,7 +776,10 @@ bool create_swapchain(uint32_t width, uint32_t height) {
     // (as on a card or driver with vsync forced. relink: and the "30, smooth" frame rate, whose frames are each held for the
     // same number of refreshes by presenting them again: only FIFO shows every present, one a refresh)
     // (relink: and the Insert menu's V-Sync, for a card whose driver has no mailbox (AMD's on Windows): immediate tears)
-    const bool force_fifo = getenv("RX_VK_FIFO") != nullptr || opts.vsync != 0 || (fps_low_cap() > 0 && !fifo_held_for_startup.load());
+    // (relink-amd: with the Lossless Scaling mode's repeats off, the low cap is a timer's alone and does not need FIFO)
+    const LsEffective& ls = ls_effective();
+    const bool force_fifo = getenv("RX_VK_FIFO") != nullptr || opts.vsync != 0 ||
+                            (fps_low_cap() > 0 && ls.repeats && !fifo_held_for_startup.load());
     if (!force_fifo) {
         for (auto m : modes)
             if (m == VK_PRESENT_MODE_MAILBOX_KHR) mode = m;
@@ -773,6 +795,18 @@ bool create_swapchain(uint32_t width, uint32_t height) {
             for (auto m : modes)
                 if (m == VK_PRESENT_MODE_IMMEDIATE_KHR) mode = m;
     }
+    // (relink-amd) the Lossless Scaling mode's present mode over the rows' (ls_compat.h): FIFO (LS Max Compatibility: every present
+    // on a refresh, the cadence a capture sees regular) or immediate (LS Performance, where the driver has it; on Windows only
+    // unless RX_VK_LS_PRESENT asks: immediate on NVIDIA's X11 path turns vblank off for every output)
+    if (ls.present == LS_PRESENT_FIFO) mode = VK_PRESENT_MODE_FIFO_KHR;
+#ifdef _WIN32
+    const bool ls_immediate_here = true;
+#else
+    const bool ls_immediate_here = getenv("RX_VK_LS_PRESENT") != nullptr;
+#endif
+    if (ls.present == LS_PRESENT_IMMEDIATE && ls_immediate_here)
+        for (auto m : modes)
+            if (m == VK_PRESENT_MODE_IMMEDIATE_KHR) mode = m;
     VkSwapchainCreateInfoKHR ci{VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR};
     ci.surface = dev.surface;
     ci.minImageCount = std::max(caps.minImageCount, 4u);   // (relink: mailbox with frame interpolation: an image always free)
@@ -780,6 +814,8 @@ bool create_swapchain(uint32_t width, uint32_t height) {
     // more of delay for nothing, the display's pace being the frames' anyway)
     if (fps_low_cap() && mode == VK_PRESENT_MODE_FIFO_KHR) ci.minImageCount = std::max(caps.minImageCount, 3u);
     if (caps.maxImageCount) ci.minImageCount = std::min(ci.minImageCount, caps.maxImageCount);
+    // (relink-amd) the Lossless Scaling mode's image count (LS Performance, LS Max Compatibility: 3, one frame less queued than 4)
+    ci.minImageCount = ls_image_count(ci.minImageCount, ls.images, caps.minImageCount, caps.maxImageCount);
     ci.imageFormat = fmt.format;
     ci.imageColorSpace = fmt.colorSpace;
     ci.imageExtent = {width, height};
@@ -812,6 +848,17 @@ bool create_swapchain(uint32_t width, uint32_t height) {
     ci.clipped = VK_TRUE;
     ci.oldSwapchain = dev.swapchain;
     reflex_swapchain_info(ci);   // (NVIDIA Reflex: latency mode on)
+#ifdef _WIN32
+    // (relink-amd) the Lossless Scaling mode: the driver told not to present the window exclusively (borderless at the monitor's
+    // size is otherwise the driver's call), which DXGI Desktop Duplication and LS's overlay cannot work with. Chained last
+    VkSurfaceFullScreenExclusiveInfoEXT fse{VK_STRUCTURE_TYPE_SURFACE_FULL_SCREEN_EXCLUSIVE_INFO_EXT};
+    if (fse_device_ext && ls.fse != LS_FSE_DEFAULT) {
+        fse.fullScreenExclusive = ls.fse == LS_FSE_ALLOW ? VK_FULL_SCREEN_EXCLUSIVE_ALLOWED_EXT : VK_FULL_SCREEN_EXCLUSIVE_DISALLOWED_EXT;
+        const void** tail = &ci.pNext;
+        while (*tail) tail = (const void**)&((VkBaseOutStructure*)*tail)->pNext;
+        *tail = &fse;
+    }
+#endif
     VkSwapchainKHR sc;
     result = vkCreateSwapchainKHR(dev.device, &ci, nullptr, &sc);
     if (result != VK_SUCCESS) {
@@ -846,8 +893,10 @@ bool create_swapchain(uint32_t width, uint32_t height) {
     vkGetSwapchainImagesKHR(dev.device, sc, &n, nullptr);
     dev.swap_images.resize(n);
     vkGetSwapchainImagesKHR(dev.device, sc, &n, dev.swap_images.data());
-    logf("vk: swapchain %ux%u, %u images, %s", width, height, n,
-         mode == VK_PRESENT_MODE_MAILBOX_KHR ? "mailbox" : mode == VK_PRESENT_MODE_IMMEDIATE_KHR ? "immediate" : "fifo");
+    logf("vk: swapchain %ux%u, %u images, %s%s", width, height, n,
+         mode == VK_PRESENT_MODE_MAILBOX_KHR ? "mailbox" : mode == VK_PRESENT_MODE_IMMEDIATE_KHR ? "immediate" : "fifo",
+         ls.profile != LS_OFF ? ls.fse == LS_FSE_DISALLOW && fse_device_ext ? " (Lossless Scaling mode, exclusive fullscreen disallowed)"
+                                                                            : " (Lossless Scaling mode)" : "");
     reflex_swapchain_created(sc);   // (NVIDIA Reflex: its sleep mode on the new swapchain)
     return true;
 }
@@ -954,6 +1003,12 @@ int display_refresh_hz() {
 int low_cap_repeats() {
     const int cap = fps_low_cap();
     if (!cap || dev.offscreen || dev.swap_mode != VK_PRESENT_MODE_FIFO_KHR || framegen_on()) return 1;
+    // (relink-amd) the Lossless Scaling mode (LSFG): each frame presented once, LS's frame generation would take a repeat for a frame
+    // that did not move. host/nn_vi.c then paces the cap on its timer alone (low_cap_mfps 0: no rate held by the display)
+    if (!ls_effective().repeats) {
+        low_cap_mfps.store(0, std::memory_order_relaxed);
+        return 1;
+    }
     // (the refreshes nearest the cap's period: 60 and 120 Hz hold 30 fps exactly; 144 Hz holds each frame 5 refreshes, 28.8 fps)
     const int hz = display_refresh_hz();
     const int repeats = (hz + cap / 2) / cap;
