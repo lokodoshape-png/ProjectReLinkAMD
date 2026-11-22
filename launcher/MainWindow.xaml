@@ -53,6 +53,9 @@
                   </Border>
                 </DockPanel>
               </RadioButton>
+              <RadioButton x:Name="NavSaves" Style="{StaticResource Nav}" GroupName="Nav" Checked="NavChanged" Tag="&#xE74E;" BorderBrush="{StaticResource Blue}">
+                <TextBlock x:Name="NavSavesText" Text="Saves"/>
+              </RadioButton>
             </StackPanel>
           </StackPanel>
           <StackPanel DockPanel.Dock="Bottom">
@@ -250,6 +253,30 @@
             <WrapPanel Grid.Row="3" Margin="2,10,0,0">
               <Button x:Name="ModsOpenFolder" Style="{StaticResource Link}" Foreground="{StaticResource Green}" Margin="0,0,22,0" Click="OpenModsFolder"/>
               <Button x:Name="ModsRebuild" Style="{StaticResource Link}" Foreground="{StaticResource Green}" Visibility="Collapsed" Click="RebuildClick"/>
+            </WrapPanel>
+          </Grid>
+
+          <!-- (relink-amd) Saves: ReLink's own, and the ones other programs keep, to import (SavesPage.cs) -->
+          <Grid x:Name="SavesView" Visibility="Collapsed">
+            <Grid.Resources>
+              <StaticResource x:Key="Accent" ResourceKey="Blue"/><StaticResource x:Key="AccentTint" ResourceKey="BlueTint"/><StaticResource x:Key="AccentEdge" ResourceKey="BlueEdge"/>
+            </Grid.Resources>
+            <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+            <Border Style="{StaticResource Strip}" Background="{StaticResource Blue}" HorizontalAlignment="Left">
+              <TextBlock x:Name="SavesTitle" FontWeight="Bold" FontSize="16" Foreground="White"/>
+            </Border>
+            <TextBlock x:Name="SavesIntro" Grid.Row="1" Style="{StaticResource Body}" Margin="2,10,0,6"/>
+            <TextBlock x:Name="SavesMine" Grid.Row="2" Style="{StaticResource RowLabel}" FontWeight="SemiBold" Margin="2,2,0,6"/>
+            <ScrollViewer Grid.Row="3" VerticalScrollBarVisibility="Auto">
+              <StackPanel x:Name="SavesList"/>
+            </ScrollViewer>
+            <TextBlock x:Name="SavesStatus" Grid.Row="4" Style="{StaticResource RowHint}" Margin="2,8,0,0" Visibility="Collapsed"/>
+            <WrapPanel Grid.Row="5" Margin="2,10,0,0">
+              <CheckBox x:Name="SavesKeep" Style="{StaticResource Switch}" VerticalAlignment="Center"/>
+              <TextBlock x:Name="SavesKeepText" Style="{StaticResource RowHint}" VerticalAlignment="Center" Margin="8,0,22,0"/>
+              <Button x:Name="SavesBrowse" Style="{StaticResource Link}" Foreground="{StaticResource Blue}" Margin="0,0,22,0" Click="SavesBrowseClick"/>
+              <Button x:Name="SavesRescan" Style="{StaticResource Link}" Foreground="{StaticResource Blue}" Margin="0,0,22,0" Click="SavesRescanClick"/>
+              <Button x:Name="SavesOpenBackups" Style="{StaticResource Link}" Foreground="{StaticResource Blue}" Click="SavesOpenBackupsClick"/>
             </WrapPanel>
           </Grid>
 

@@ -625,6 +625,7 @@ public partial class MainWindow
         PlayingOverlay.Visibility = Visibility.Collapsed;
         LeftColumn.Visibility = Tablet.Visibility = Visibility.Visible;
         ShowHome();   // (the in-game menu may have changed the options: read again)
+        if (SavesView.Visibility == Visibility.Visible) { SavesMine.Text = MineText(); FillSaves(); }   // (the game may have saved, and Import works again)
         CheckLatest();
         WindowState = WindowState.Normal;
         Activate();
