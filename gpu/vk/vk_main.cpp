@@ -27,6 +27,7 @@
 #include "vk_reflex.h"
 #include "vk_progress.h"
 #include "ls_compat.h"   // (relink-amd: the Lossless Scaling mode)
+#include "vk_compile_profile.h"   // (relink-amd: the shader compile profile)
 #ifdef _WIN32
 #include <dxgi1_6.h>   // (relink: HDR output, hdr_display)
 #endif
@@ -1077,8 +1078,10 @@ void prepare_with_screen() {
     std::thread worker([] {
         // (relink-amd) each phase of the start timed in the log, with the RAM free before and after it ("vk: start phase ...")
         const auto all0 = std::chrono::steady_clock::now();
+        compile_profile_start();
         const auto timed = [](const char* name, const auto& fn) {
             log_phase_ram(name);
+            cprof::phase(name, 0, ram_available_mb());
             const auto t0 = std::chrono::steady_clock::now();
             fn();
             logf("vk: start phase %s: %.1f s, %llu MB of RAM free after it", name,
@@ -1099,6 +1102,8 @@ void prepare_with_screen() {
         }
         logf("vk: start phases: %.1f s in all%s", std::chrono::duration<double>(std::chrono::steady_clock::now() - all0).count(),
              prepare_stopped() ? " (stopped: the window was closed)" : "");
+        cprof::phase("in play", 0, ram_available_mb());
+        cprof::write("end of the start");
         if (prepare_stopped()) pipeline_cache_save(true);   // (the driver's part built so far, for the next start)
         else if (update) prepare_background();
         prep_finished.store(true, std::memory_order_release);
@@ -1207,12 +1212,18 @@ bool started_up() {
         };
         printf("@@stage shaders Getting the game ready\n");
         fflush(stdout);
+        compile_profile_start();   // (relink-amd: the shader compile profile, of the preparation at the build too)
         part = 0;
+        cprof::phase("build: shaders (translation)", 0, ram_available_mb());
         const bool prepared = prepare_run(progress, false);
         part = 1;
+        cprof::phase("build: predicted pipelines", 0, ram_available_mb());
         if (prepared) predict_run(progress);
         part = 2;
+        cprof::phase("build: pipelines before the game", 0, ram_available_mb());
         precompile_run(progress);
+        cprof::phase("build: done", 0, ram_available_mb());
+        cprof::write("end of the preparation at the build");
         pipeline_cache_save(true);
         remove(skipped_path().c_str());
         return true;

@@ -34,6 +34,7 @@
 
 #include "vk_paths.h"
 #include "vk_draw.h"
+#include "vk_compile_profile.h"   // (relink-amd: the compile profile)
 #include "vk_framegen.h"   // (relink: the gameplay upscale's output, for the item wheel's backdrop)
 #include "dlss_actor.h"
 #include "vk_dlss.h"
@@ -1058,7 +1059,10 @@ VkResult guarded_compute_once(VkPipelineCache cache, const VkComputePipelineCrea
 /// (relink) A compute pipeline the driver's compiler fails on (AMD's crashes, -13, or faults, -77, on some programs) is built
 /// again without its optimizer, as a graphics one is (build_graphics): run a little slower rather than left out
 VkResult guarded_compute(VkPipelineCache cache, const VkComputePipelineCreateInfo* ci, VkPipeline* pl) {
+    cprof::Timer timed(cprof::Compute, cprof::cur_key);   // (relink-amd: the compile profile; the caller names the program)
+    cprof::cur_key = 0;
     const VkResult r = guarded_compute_once(cache, ci, pl);
+    timed.ok = r == VK_SUCCESS;
     if (r == VK_SUCCESS || r == VK_ERROR_OUT_OF_HOST_MEMORY || r == VK_ERROR_OUT_OF_DEVICE_MEMORY ||
         (ci->flags & VK_PIPELINE_CREATE_DISABLE_OPTIMIZATION_BIT))
         return r;
@@ -1066,6 +1070,7 @@ VkResult guarded_compute(VkPipelineCache cache, const VkComputePipelineCreateInf
     again.flags |= VK_PIPELINE_CREATE_DISABLE_OPTIMIZATION_BIT;
     *pl = VK_NULL_HANDLE;
     const VkResult second = guarded_compute_once(cache, &again, pl);
+    timed.ok = second == VK_SUCCESS;
     static std::atomic<int> told{0};
     if (told++ < 20)
         logf("vk: a compute pipeline failed (%d) with the driver's optimizer: %s", (int)r,
@@ -1306,7 +1311,9 @@ unsigned start_threads(const char* phase) {
     if (told++ < 12)
         logf("vk: %s: %u threads (%u CPU threads, %llu MB of RAM free, %d MB a thread; RX_VK_PREPARE_THREADS, "
              "RX_VK_PREPARE_MB_PER_THREAD=0: other)", phase, n, cpus, (unsigned long long)free_mb, per);
-    return std::max(1u, std::min(n, by_cpu));
+    const unsigned chosen = std::max(1u, std::min(n, by_cpu));
+    cprof::phase_threads(chosen);   // (relink-amd: the compile profile, the phase's workers)
+    return chosen;
 }
 unsigned prepare_threads() {
     static const unsigned n = start_threads("shader preparation");
@@ -1707,6 +1714,7 @@ PipeEntry* graphics_pipeline(const Program& p, const NvnState& s, const Targets&
 VkPipeline build_graphics(const Program& p, const NvnState& s, const Targets& at, VkPrimitiveTopology topo, int part) {
     const Shader::Info& vs = *vertex_info(p);
     const auto t0 = std::chrono::steady_clock::now();
+    cprof::Timer timed(cprof::Graphics, p.key);   // (relink-amd: the compile profile)
     std::vector<VkPipelineShaderStageCreateInfo> stages;
     for (const Stage& st : p.stages) {
         // (relink: the fallback's dispatches are not graphics stages. Only a fallback program's: with native mesh shaders
@@ -1916,6 +1924,7 @@ VkPipeline build_graphics(const Program& p, const NvnState& s, const Targets& at
             logf("vk: %s %016llx failed (%d) with the driver's optimizer: %s", part >= 0 ? "a library of" : "graphics pipeline for",
                  (unsigned long long)p.key, (int)first, r == VK_SUCCESS ? "made without it" : "not made without it either");
     }
+    timed.ok = r == VK_SUCCESS;
     if (part >= 0) {
         if (r != VK_SUCCESS) {
             static std::atomic<int> logged;
@@ -5853,6 +5862,7 @@ bool fallback_compute_pipelines(Program& p) {
         static std::atomic<int> told_start{0};
         if (told_start++ < 64) logf("vk: fallback: compiling stage %zu of %016llx", i, (unsigned long long)p.key);
         const auto t0 = std::chrono::steady_clock::now();
+        cprof::cur_key = p.key;   // (relink-amd: the compile profile)
         const VkResult r = guarded_compute(pcache, &ci, &made[i]);
         const long long ms = (long long)std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - t0).count();
         if (r != VK_SUCCESS) {
@@ -7769,6 +7779,7 @@ bool prepare_run(void (*progress)(size_t done, size_t total), bool background) {
         VkPipeline pl = VK_NULL_HANDLE;
         // (into the app's pipeline cache, saved to mkw_vk_pipelines.bin: without it the next start compiled them again in play
         // where the driver's own cache missed them, AMD's 15 s culling compiles each time)
+        cprof::cur_key = p.key;   // (relink-amd: the compile profile)
         if (guarded_compute(pcache, &ci, &pl) == VK_SUCCESS && pl) {
             vkDestroyPipeline(dev.device, pl, nullptr);
             libs++;
@@ -7863,6 +7874,23 @@ void prepare_background() {
 // each noted pipeline is built once for that cache and let go, as predict_run does for the predicted ones: its program is borrowed
 // from relink_programs.bin for it and nothing stays in memory. relink_pipelines_warm.txt says which driver, build and program were
 // warmed. RX_VK_WARM=0: never; =1: at this start whatever the file says. RX_VK_WARM_S: a time budget in seconds (600; 0: none)
+/// (relink-amd) The compile profile's folder, the notes' (vk_compile_profile.h), and its last write when the game closes
+void compile_profile_start() {
+    if (!cprof::enabled()) return;
+    static std::once_flag once;
+    std::call_once(once, [] {
+        const std::string notes = pipe_notes_path();
+        {
+            std::lock_guard lk(cprof::mu);
+            cprof::out_dir = notes.substr(0, notes.find_last_of("\\/") + 1);
+        }
+        logf("vk: the shader compile profile goes to %srelink_shader_profile.txt (RX_VK_COMPILE_PROFILE=0: off)",
+             cprof::out_dir.c_str());
+        std::atexit([] {
+            if (!cprof::writing.exchange(true)) cprof::write("the game closed");
+        });
+    });
+}
 std::string warm_marker_path() {
     const std::string notes = pipe_notes_path();
     return notes.substr(0, notes.find_last_of("\\/") + 1) + "relink_pipelines_warm.txt";
@@ -8245,6 +8273,7 @@ void precompile_run(void (*progress)(size_t done, size_t total)) {
                 pin_subgroup(ci.stage, p.workgroup[0]);
                 ci.layout = p.layout;
                 VkPipeline made = VK_NULL_HANDLE;
+                cprof::cur_key = p.key;   // (relink-amd: the compile profile)
                 if (guarded_compute(pcache, &ci, &made) != VK_SUCCESS) made = VK_NULL_HANDLE;
                 std::lock_guard lk(pre->mu);
                 if (!pre->abandoned) p.compute_pipeline = made;
@@ -8393,6 +8422,7 @@ bool make_compute_pipeline(Program& p, bool eager) {
     VkPipeline made = VK_NULL_HANDLE;
     const auto t0 = std::chrono::steady_clock::now();
     compiles_running++;
+    cprof::cur_key = p.key;   // (relink-amd: the compile profile)
     const VkResult r = guarded_compute(pcache, &ci, &made);
     compiles_running--;
     compile_note(eager ? "compute (ahead)" : "compute (at its dispatch)", p.key, t0);
@@ -8568,6 +8598,7 @@ void dispatch(VkCommandBuffer cmd, NvnState& s, uint32_t x, uint32_t y, uint32_t
                 if (noopt) ci.flags |= VK_PIPELINE_CREATE_DISABLE_OPTIMIZATION_BIT;
                 const auto t0 = std::chrono::steady_clock::now();
                 VkPipeline made = VK_NULL_HANDLE;
+                cprof::cur_key = q.key;   // (relink-amd: the compile profile)
                 if (const VkResult r = guarded_compute(pcache, &ci, &made); r != VK_SUCCESS || !made) {
                     static std::atomic<int> told{0};
                     if (told++ < 20) logf("vk: compute pipeline of %016llx not made (%d)", (unsigned long long)q.key, (int)r);
@@ -8619,6 +8650,7 @@ void dispatch(VkCommandBuffer cmd, NvnState& s, uint32_t x, uint32_t y, uint32_t
             static std::atomic<int> told{0};
             if (told++ < 400) logf("vk: compute pipeline of %016llx: compiling", (unsigned long long)p.key);
         }
+        cprof::cur_key = p.key;   // (relink-amd: the compile profile)
         if (const VkResult made = guarded_compute(pcache, &ci, &p.compute_pipeline); made != VK_SUCCESS) {
             static std::atomic<int> told{0};
             if (told++ < 20) logf("vk: compute pipeline of %016llx not made (%d)", (unsigned long long)p.key, (int)made);

@@ -52,6 +52,7 @@
 #include "vk_internal.h"
 #include "vk_jobs.h"
 #include "vk_draw.h"
+#include "vk_compile_profile.h"   // (relink-amd: the compile profile)
 
 // (EvilOOT, RX_VK_PTR_DIAG) the pointer pass's counts for this thread's translations
 // (global_memory_to_storage_buffer_pass.cpp, declared by hand so no Eden header changes)
@@ -1612,6 +1613,8 @@ void translate_into(Program& p, const NvnState& s, const Code* vsc, const Code* 
         if (!trial && logged++ < 30) logf("vk: program %016llx not translated: %s", (unsigned long long)p.key, e.what());
     }
     st_translate_ns += std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - t0).count();
+    cprof::record(cprof::Translate, p.key, std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t0).count(),
+                  !p.failed);
     p.ready.store(true, std::memory_order_release);
 }
 
@@ -1827,6 +1830,8 @@ void translate_mesh_into(Program& p, const NvnState& s, const Code* task, const 
         if (logged++ < 30) logf("vk: mesh program %016llx not translated: %s", (unsigned long long)p.key, e.what());
     }
     st_translate_ns += std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - t0).count();
+    cprof::record(cprof::Translate, p.key, std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t0).count(),
+                  !p.failed);
     p.ready.store(true, std::memory_order_release);
 }
 
