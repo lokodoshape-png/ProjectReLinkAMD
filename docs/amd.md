@@ -63,6 +63,12 @@ play every 120 frames are summed up. Three files go beside `relink_pipelines.bin
 They are written at the end of the start, every 30 s in play and when the game closes. `RX_VK_COMPILE_PROFILE=0`: off.
 The log says where they go: `vk: the shader compile profile goes to ...`.
 
+## AMD MAX PERFORMANCE (0.7.9.8)
+
+The capability matrix and the known AMD problems in one place (`gpu/vk/amd_caps.h`, `gpu/vk/amd_quirks.h`), written to the
+log as `vk: AMD MAX:` lines. This version only reports. The plan, the stages and the details: `docs/amd_max_performance.md`
+(in Portuguese).
+
 ## What to report
 
 `relink_log.txt` and `relink_shader_profile.txt` (with the two .csv files) from the game folder, with the card, the driver version and the `relink_env.txt` used.

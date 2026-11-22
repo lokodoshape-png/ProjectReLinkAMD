@@ -30,6 +30,8 @@
 #include "vk_progress.h"
 #include "ls_compat.h"   // (relink-amd: the Lossless Scaling mode)
 #include "vk_compile_profile.h"   // (relink-amd: the shader compile profile)
+#include "amd_caps.h"     // (relink-amd: AMD MAX PERFORMANCE, the capability matrix)
+#include "amd_quirks.h"
 #ifdef _WIN32
 #include <dxgi1_6.h>   // (relink: HDR output, hdr_display)
 #endif
@@ -1379,6 +1381,102 @@ const char* describe() {
     return d.c_str();
 }
 
+// (relink-amd 0.7.9.8, AMD MAX PERFORMANCE stage 1) The GPU's capabilities in one place (amd_caps.h) and the known AMD problems
+// this start applies (amd_quirks.h), in the log as "vk: AMD MAX:" lines. AMD GPUs only; it reads, it decides nothing.
+// RX_VK_AMD_MAX_LOG=0: not written
+void amd_max_report() {
+    if (dev.props.vendorID != 0x1002) return;
+    if (const char* e = getenv("RX_VK_AMD_MAX_LOG"); e && !atoi(e)) return;
+    amdmax::Caps c;
+    c.vendor_id = dev.props.vendorID, c.device_id = dev.props.deviceID, c.driver_version = dev.props.driverVersion;
+    c.api_version = dev.props.apiVersion, c.device_name = dev.props.deviceName;
+    c.integrated = dev.props.deviceType == VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU;
+    {
+        VkPhysicalDeviceDriverProperties dp{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DRIVER_PROPERTIES};
+        VkPhysicalDeviceSubgroupSizeControlProperties sc{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_SIZE_CONTROL_PROPERTIES};
+        VkPhysicalDeviceSubgroupProperties sg{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_PROPERTIES};
+        dp.pNext = &sc, sc.pNext = &sg;
+        VkPhysicalDeviceProperties2 p2{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2};
+        p2.pNext = &dp;
+        vkGetPhysicalDeviceProperties2(dev.physical, &p2);
+        c.driver_id = (uint32_t)dp.driverID, c.driver_name = dp.driverName, c.driver_info = dp.driverInfo;
+        c.sg_default = sg.subgroupSize, c.sg_min = sc.minSubgroupSize, c.sg_max = sc.maxSubgroupSize;
+    }
+    c.sg32_stages = (uint32_t)dev.sg32_stages, c.big_warp = dev.big_warp;
+    for (uint32_t h = 0; h < dev.memory.memoryHeapCount; h++)
+        if (dev.memory.memoryHeaps[h].flags & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT)
+            c.vram_bytes = std::max<uint64_t>(c.vram_bytes, dev.memory.memoryHeaps[h].size);
+    c.ram_free_bytes = ram_available_mb() << 20;
+    c.memory_budget = dev.memory_budget;
+    c.mesh = dev.mesh_shader, c.mesh_fallback = dev.mesh_fallback;
+    c.coop_matrix = dev.coop_matrix;
+    if (dev.coop_matrix && vkGetPhysicalDeviceCooperativeMatrixPropertiesKHR) {
+        uint32_t n = 0;
+        vkGetPhysicalDeviceCooperativeMatrixPropertiesKHR(dev.physical, &n, nullptr);
+        std::vector<VkCooperativeMatrixPropertiesKHR> props(n, VkCooperativeMatrixPropertiesKHR{VK_STRUCTURE_TYPE_COOPERATIVE_MATRIX_PROPERTIES_KHR});
+        if (n) vkGetPhysicalDeviceCooperativeMatrixPropertiesKHR(dev.physical, &n, props.data());
+        std::string all;
+        for (const auto& p : props) {
+            const bool f16 = p.AType == VK_COMPONENT_TYPE_FLOAT16_KHR && p.BType == VK_COMPONENT_TYPE_FLOAT16_KHR &&
+                             p.CType == VK_COMPONENT_TYPE_FLOAT16_KHR && p.ResultType == VK_COMPONENT_TYPE_FLOAT16_KHR &&
+                             p.scope == VK_SCOPE_SUBGROUP_KHR;
+            if (f16 && p.MSize == 16 && p.NSize == 8 && p.KSize == 16) c.coop_16x8x16_f16 = true;
+            if (f16 && p.MSize == 16 && p.NSize == 16 && p.KSize == 16) c.coop_16x16x16_f16 = true;
+            char b[96];
+            snprintf(b, sizeof b, "%s%ux%ux%u A%d B%d C%d R%d scope %d", all.empty() ? "" : ", ", p.MSize, p.NSize, p.KSize, (int)p.AType,
+                     (int)p.BType, (int)p.CType, (int)p.ResultType, (int)p.scope);
+            all += b;
+        }
+        logf("vk: AMD MAX: cooperative matrix shapes the driver offers: %s", all.empty() ? "none" : all.c_str());
+    }
+    c.native_mma = dev.native_mma, c.mma_software = coopmat_software();
+    c.f16 = dev.vk12.shaderFloat16, c.float_atomic_add = dev.float_atomic_add;
+    c.anti_lag = reflex_is_amd();
+    c.bc = dev.features.textureCompressionBC;
+    {
+        VkFormatProperties fp{};
+        vkGetPhysicalDeviceFormatProperties(dev.physical, VK_FORMAT_ASTC_4x4_UNORM_BLOCK, &fp);
+        c.astc = (fp.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT) != 0;
+    }
+    c.cpu_threads = std::max(1u, std::thread::hardware_concurrency());
+#ifdef _WIN32
+    {
+        MEMORYSTATUSEX ms{sizeof ms};
+        if (GlobalMemoryStatusEx(&ms)) c.ram_total_bytes = ms.ullTotalPhys;
+        // the cores by efficiency class: on a hybrid CPU (Intel 12th gen and later) the highest class is the performance cores
+        DWORD len = 0;
+        GetLogicalProcessorInformationEx(RelationProcessorCore, nullptr, &len);
+        std::vector<uint8_t> buf(len);
+        if (len && GetLogicalProcessorInformationEx(RelationProcessorCore, (PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX)buf.data(), &len)) {
+            uint32_t cores[256]{};
+            int top = 0;
+            for (DWORD at = 0; at < len;) {
+                const auto* r = (PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX)(buf.data() + at);
+                if (r->Relationship == RelationProcessorCore) {
+                    const int cls = r->Processor.EfficiencyClass;
+                    cores[cls]++, top = std::max(top, cls);
+                }
+                at += r->Size;
+            }
+            if (top > 0) {   // (one class only: not hybrid, said as threads alone)
+                c.cpu_perf_cores = cores[top];
+                for (int k = 0; k < top; k++) c.cpu_eff_cores += cores[k];
+            }
+        }
+    }
+#endif
+    const amdmax::GenGuess g = amdmax::guess_gen(c);
+    logf("vk: AMD MAX: %s", amdmax::summary_gpu(c, g).c_str());
+    logf("vk: AMD MAX: %s", amdmax::summary_memory(c).c_str());
+    logf("vk: AMD MAX: %s", amdmax::summary_shaders(c).c_str());
+    logf("vk: AMD MAX: %s", amdmax::matrix_line(c).c_str());
+    logf("vk: AMD MAX: %s", amdmax::summary_cpu(c).c_str());
+    const auto applied = amdmax::applied_quirks(c, g.gen);
+    for (const auto& a : applied) logf("vk: AMD MAX: known problem %s", amdmax::quirk_line(a).c_str());
+    logf("vk: AMD MAX: %zu known problem(s) applied; this version only reports, nothing chosen from it (RX_VK_AMD_MAX_LOG=0: these lines off)",
+         applied.size());
+}
+
 MkwVkRenderer table;
 
 } // namespace
@@ -1427,6 +1525,7 @@ const MkwVkRenderer* mkwvk_init(const MkwVkHost* h) {
              getenv("RX_VK_MESH_OPT") ? "with the driver's optimizer (RX_VK_MESH_OPT)" : "without the driver's optimizer",
              fast_sync_all() ? "on (RX_VK_FAST_SYNC=0: off)" : "off", (unsigned long long)ram_available_mb());
     }
+    amd_max_report();   // (relink-amd: AMD MAX PERFORMANCE's capability lines)
     if (!dev.mesh_shader && !dev.mesh_fallback && !getenv("RX_VK_NO_MESH_WARNING")) {
         // (the game draws its foliage, grass and many effects with mesh shaders: without them those draws are left out and the
         // picture is broken (an RX 580's "static"-like scenes, 2026-11-08). Said once, on its own thread, and the game goes on.)
