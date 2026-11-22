@@ -134,6 +134,7 @@ void gpu_stall_report(double seconds, uint64_t done, uint64_t waited);
 /// VK_AMD_buffer_marker's buffer, for RX_VK_CHECKPOINTS on a device without the NV checkpoints (vk_draw.cpp)
 void buffer_markers_init();
 void coopmat_init();   // vk_coopmat.cpp (once the device is made)
+bool coopmat_software();   // (relink-amd) the matrix multiplies run on subgroup shuffles (vk_coopmat.cpp)
 /// A marker of another kind of GPU work (m: mirror sync, b: write-back, u: texture upload, g: GPU unswizzle; key: its
 /// pool or texture), RX_VK_CHECKPOINTS
 void checkpoint_mark(VkCommandBuffer cmd, uint64_t key, char kind);
