@@ -36,3 +36,9 @@ the latest release (`launcher/Updater.cs`, `SetupAsset`), so a fork release must
 ## What to report
 
 `relink_log.txt` from the game folder, with the card, the driver version and the `relink_env.txt` used.
+
+## Releases from main (0.7.9.5)
+
+A push to main whose `launcher/ReLink.csproj` `<Version>` has no tag `v<Version>` yet is a release: `windows.yml` builds it and
+makes the release and its tag at that commit, with `RelinkAMD.exe` attached. A new version only needs its number raised in the
+csproj; a tag pushed by hand (`v*`, lowercase) still works as upstream's.

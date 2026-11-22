@@ -15,7 +15,9 @@ else
 fi
 if ! gh release view "$tag" >/dev/null 2>&1; then
     # (the other workflow can make it between the view and the create: its release is then the one used)
-    gh release create "$tag" --verify-tag --title "$tag" --generate-notes "${kind[@]}" ||
+    # (RELEASE_TARGET: a commit, when the tag does not exist yet and is made with the release; ProjectReLinkAMD's releases from main)
+    if [[ -n ${RELEASE_TARGET:-} ]]; then where=(--target "$RELEASE_TARGET"); else where=(--verify-tag); fi
+    gh release create "$tag" "${where[@]}" --title "$tag" --generate-notes "${kind[@]}" ||
         gh release view "$tag" >/dev/null
 fi
 gh release upload "$tag" --clobber "$@"
