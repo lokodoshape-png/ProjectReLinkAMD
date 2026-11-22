@@ -33,6 +33,22 @@ The one exe a release offers is `RelinkAMD.exe` (upstream: `ReLink-Setup.exe`). 
 its copy keeps the name `ReLink-Setup.exe`, which the builder's Repair runs. The launcher's updater looks for `RelinkAMD.exe` in
 the latest release (`launcher/Updater.cs`, `SetupAsset`), so a fork release must carry it under this name.
 
+## Brazilian Portuguese (0.7.9.6)
+
+Everything the player reads is in Brazilian Portuguese when they choose it:
+
+- The launcher: Game page, "Launcher language", now English, Français or Português (Brasil) (`launcher/Texts.cs`, each `L(fr, en, pt)`).
+  Without a choice yet it follows Windows: Portuguese on a Windows in Portuguese. `RELINK_LANG=pt` for one run.
+- The Insert menu, the start-up screen and the game's own message boxes follow the game's language (`language.txt`, which the
+  launcher's "Game language" writes; `pt-BR` gives Portuguese). `RELINK_MENU_LANG=pt` or `en` overrides it for one run. The
+  menu's English stays in the code; `gpu/vk/menu_lang.h` looks each drawn text up in `gpu/vk/menu_pt.inc` and draws the
+  Portuguese, with the wide GDI calls so the accents show whatever the system's code page. A text missing from the table stays
+  English: add a line `{"English as in the code", "Português"},` there.
+- The setup (`RelinkAMD.exe`, `launcher/setup/setup.c`) on a Windows in Portuguese, and `recomplauncher.json`'s labels.
+
+Not translated: the log (`relink_log.txt`), the build tools' own error lines, and the game's text itself (the game has its own
+Portuguese: choose `pt-BR` as the game language).
+
 ## What to report
 
 `relink_log.txt` from the game folder, with the card, the driver version and the `relink_env.txt` used.

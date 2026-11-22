@@ -72,46 +72,46 @@ public partial class MainWindow : Window
 
     void ApplyTexts()
     {
-        HeroSub.Text = L("recompilé pour votre PC", "recompiled for your PC");
+        HeroSub.Text = L("recompilé pour votre PC", "recompiled for your PC", "recompilado para o seu PC");
         SidebarTexts();
-        LooksHead.Text = L("L'image", "How it looks");
-        MovesHead.Text = L("La fluidité", "How it moves");
-        LooksMore.Text = MovesMore.Text = L("Changer ›", "Change ›");
+        LooksHead.Text = L("L'image", "How it looks", "Visual");
+        MovesHead.Text = L("La fluidité", "How it moves", "Movimento");
+        LooksMore.Text = MovesMore.Text = L("Changer ›", "Change ›", "Mudar ›");
         ModsHead.Text = "Mods";
-        ModsMore.Text = L("Gérer ›", "Manage ›");
-        NewsHead.Text = L("Nouveautés", "What's new");
-        NewsMore.Text = L("Lire les notes ›", "Read the notes ›");
-        HeroPlayText.Text = L("Jouer", "Play");
+        ModsMore.Text = L("Gérer ›", "Manage ›", "Gerenciar ›");
+        NewsHead.Text = L("Nouveautés", "What's new", "Novidades");
+        NewsMore.Text = L("Lire les notes ›", "Read the notes ›", "Ler as notas ›");
+        HeroPlayText.Text = L("Jouer", "Play", "Jogar");
         ModsTitle.Text = "Mods";
         ModsIntro.Text = L("Les mods du dossier mods du jeu. Les mods romfs (textures, modèles, sons, textes) comptent dès le prochain lancement ; les mods exefs (patchs de code) demandent de reconstruire le jeu.",
-                           "The mods in the game folder's mods. RomFS mods (textures, models, sounds, text) count from the next start; exefs mods (code patches) need the game built again.");
-        ModsOpenFolder.Content = L("Ouvrir le dossier mods", "Open the mods folder");
-        ModsRebuild.Content = L("Reconstruire avec les patchs de code", "Build again with the code patches");
+                           "The mods in the game folder's mods. RomFS mods (textures, models, sounds, text) count from the next start; exefs mods (code patches) need the game built again.", "Os mods na pasta mods do jogo. Mods de RomFS (texturas, modelos, sons, texto) valem a partir da próxima abertura; mods de exefs (patches de código) precisam que o jogo seja compilado de novo.");
+        ModsOpenFolder.Content = L("Ouvrir le dossier mods", "Open the mods folder", "Abrir a pasta de mods");
+        ModsRebuild.Content = L("Reconstruire avec les patchs de code", "Build again with the code patches", "Compilar de novo com os patches de código");
 
-        InstallTitle.Text = L("Installer le jeu", "Install the game");
+        InstallTitle.Text = L("Installer le jeu", "Install the game", "Instalar o jogo");
         InstallSub.Text = L("ReLink fabrique le jeu sur ce PC à partir de votre propre copie. Il faut le jeu avec sa mise à jour v131072 (build e0f3ccfa) : les autres versions ne fonctionnent pas. Cela se fait une fois et prend de 10 à 45 minutes.",
-                            "ReLink builds the game on this PC from your own copy. It needs the game with its update v131072 (build e0f3ccfa): other versions do not work. It happens once and takes 10 to 45 minutes.");
-        CopyHead.Text = L("Votre copie du jeu", "Your copy of the game");
-        BrowseNupLink.Content = L("Choisir un fichier .nup…", "Choose a .nup file…");
-        BrowseFoldersLink.Content = L("Choisir les dossiers romfs et exefs…", "Choose the romfs and exefs folders…");
-        OutHead.Text = L("Dossier d'installation", "Install folder");
-        OutChange.Content = L("Changer…", "Change…");
+                            "ReLink builds the game on this PC from your own copy. It needs the game with its update v131072 (build e0f3ccfa): other versions do not work. It happens once and takes 10 to 45 minutes.", "O ReLink monta o jogo neste PC a partir da sua própria cópia. Ele precisa do jogo com a atualização v131072 (build e0f3ccfa): outras versões não funcionam. Acontece uma vez só e leva de 10 a 45 minutos.");
+        CopyHead.Text = L("Votre copie du jeu", "Your copy of the game", "A sua cópia do jogo");
+        BrowseNupLink.Content = L("Choisir un fichier .nup…", "Choose a .nup file…", "Escolher um arquivo .nup…");
+        BrowseFoldersLink.Content = L("Choisir les dossiers romfs et exefs…", "Choose the romfs and exefs folders…", "Escolher as pastas romfs e exefs…");
+        OutHead.Text = L("Dossier d'installation", "Install folder", "Pasta de instalação");
+        OutChange.Content = L("Changer…", "Change…", "Mudar…");
 
-        LogLink.Content = L("Afficher les détails", "Show details");
-        CancelLink.Content = L("Annuler", "Cancel");
-        BackLink.Content = L("Retour", "Back");
-        RepairLink.Content = L("Réparer", "Repair");
-        DetailsLink.Content = L("Afficher les détails", "Show details");
-        CopyLink.Content = L("Copier pour un rapport", "Copy for a report");
+        LogLink.Content = L("Afficher les détails", "Show details", "Mostrar detalhes");
+        CancelLink.Content = L("Annuler", "Cancel", "Cancelar");
+        BackLink.Content = L("Retour", "Back", "Voltar");
+        RepairLink.Content = L("Réparer", "Repair", "Reparar");
+        DetailsLink.Content = L("Afficher les détails", "Show details", "Mostrar detalhes");
+        CopyLink.Content = L("Copier pour un rapport", "Copy for a report", "Copiar para um relatório");
 
-        TabDisplay.Content = L("Affichage", "Display");
-        TabSmooth.Content = L("Fluidité", "Smoothness");
-        TabGame.Content = L("Jeu", "Game");
-        TabControls.Content = L("Contrôles", "Controls");
-        HomeFoot.Text = HeroFoot.Text = L("Le menu en jeu (Inser ou F1) change aussi ces réglages.", "The in-game menu (Insert or F1) changes these settings too.");
+        TabDisplay.Content = L("Affichage", "Display", "Tela");
+        TabSmooth.Content = L("Fluidité", "Smoothness", "Fluidez");
+        TabGame.Content = L("Jeu", "Game", "Jogo");
+        TabControls.Content = L("Contrôles", "Controls", "Controles");
+        HomeFoot.Text = HeroFoot.Text = L("Le menu en jeu (Inser ou F1) change aussi ces réglages.", "The in-game menu (Insert or F1) changes these settings too.", "O menu do jogo (Insert ou F1) também muda estas configurações.");
 
-        PlayingTitle.Text = L("Bonne partie", "Enjoy the game");
-        RestoreNow.Content = L("Remettre la fréquence de l'écran maintenant", "Put the display's refresh rate back now");
+        PlayingTitle.Text = L("Bonne partie", "Enjoy the game", "Bom jogo");
+        RestoreNow.Content = L("Remettre la fréquence de l'écran maintenant", "Put the display's refresh rate back now", "Voltar a taxa de atualização da tela agora");
     }
 
     // ================= the start =================
@@ -270,26 +270,26 @@ public partial class MainWindow : Window
         if (folder == "" || !Game.Installed(folder)) return;
         if (game != null || Process.GetProcessesByName("relink-game").Length > 0)
         {
-            MessageBox.Show(this, L("Fermez le jeu d'abord.", "Close the game first."), Texts.Name);
+            MessageBox.Show(this, L("Fermez le jeu d'abord.", "Close the game first.", "Feche o jogo primeiro."), Texts.Name);
             return;
         }
         var (files, bytes) = Game.PreparedShaders(folder);
         if (files == 0)
         {
             MessageBox.Show(this, L("Il n'y a pas de shaders préparés à supprimer : le prochain lancement les préparera.",
-                                    "There are no prepared shaders to delete: the next start will prepare them."), Texts.Name);
+                                    "There are no prepared shaders to delete: the next start will prepare them.", "Não há shaders preparados para apagar: a próxima abertura vai prepará-los."), Texts.Name);
             return;
         }
         var size = bytes >= 1L << 30 ? $"{bytes / (double)(1L << 30):0.0} GB" : $"{bytes >> 20} MB";
         if (MessageBox.Show(this,
                 L($"Supprimer les shaders préparés ({size}) ? Le prochain lancement les préparera de nouveau, ce qui prend 10 à 15 minutes. Vos sauvegardes ne sont pas touchées.",
-                  $"Delete the prepared shaders ({size})? The next start will prepare them again, which takes 10 to 15 minutes. Your saves are not touched."),
+                  $"Delete the prepared shaders ({size})? The next start will prepare them again, which takes 10 to 15 minutes. Your saves are not touched.", $"Apagar os shaders preparados ({size})? A próxima abertura vai prepará-los de novo, o que leva de 10 a 15 minutos. Os seus saves não são mexidos."),
                 Texts.Name, MessageBoxButton.YesNo) != MessageBoxResult.Yes)
             return;
         var why = Game.DeletePreparedShaders(folder);
         MainNote.Text = why == null
-            ? L("Shaders supprimés : ils seront préparés au prochain lancement.", "Shaders deleted: they will be prepared at the next start.")
-            : L("Shaders pas tous supprimés : ", "Not all the shaders could be deleted: ") + why;
+            ? L("Shaders supprimés : ils seront préparés au prochain lancement.", "Shaders deleted: they will be prepared at the next start.", "Shaders apagados: eles serão preparados na próxima abertura.")
+            : L("Shaders pas tous supprimés : ", "Not all the shaders could be deleted: ", "Nem todos os shaders puderam ser apagados: ") + why;
     }
 
     // ================= the window =================
@@ -298,7 +298,7 @@ public partial class MainWindow : Window
 
     void CloseWindow(object sender, RoutedEventArgs e)
     {
-        if (runner != null && MessageBox.Show(this, L("Arrêter l'installation et fermer ?", "Stop the install and close?"), Texts.Name, MessageBoxButton.YesNo) != MessageBoxResult.Yes) return;
+        if (runner != null && MessageBox.Show(this, L("Arrêter l'installation et fermer ?", "Stop the install and close?", "Parar a instalação e fechar?"), Texts.Name, MessageBoxButton.YesNo) != MessageBoxResult.Yes) return;
         runner?.Cancel();
         Close();
     }
@@ -312,7 +312,7 @@ public partial class MainWindow : Window
         {
             case "install":
                 dumps.Clear();
-                dumps.Add(new Dump(@"C:\Users\player\Downloads\ocarina-of-time.nup", L("Téléchargements", "Downloads"), 31L << 30, DateTime.Now.AddDays(-3)));
+                dumps.Add(new Dump(@"C:\Users\player\Downloads\ocarina-of-time.nup", L("Téléchargements", "Downloads", "Downloads"), 31L << 30, DateTime.Now.AddDays(-3)));
                 dumps.Add(new Dump(@"D:\dumps\ocarina-v0.nup", "D:", 29L << 30, DateTime.Now.AddDays(-40)));
                 checks[dumps[0].Path] = (true, "This is the supported version.");
                 checks[dumps[1].Path] = (false, "This is build 1a2b3c4d. ReLink supports build e0f3ccfa.");
@@ -324,21 +324,21 @@ public partial class MainWindow : Window
                 outPath = @"E:\Games\ReLink";
                 MakeRows(update: false);
                 Show(View.Build);
-                BuildTitle.Text = L("Installation en cours", "Installing the game");
+                BuildTitle.Text = L("Installation en cours", "Installing the game", "Instalando o jogo");
                 BuildSub.Text = outPath;
-                Stage("read"); rows["read"].Small(L("Version vérifiée", "Version checked"));
+                Stage("read"); rows["read"].Small(L("Version vérifiée", "Version checked", "Versão verificada"));
                 Stage("lift");
-                Stage("compile"); rows["compile"].Small(L("31 fichiers sur 58", "31 of 58 files"));
+                Stage("compile"); rows["compile"].Small(L("31 fichiers sur 58", "31 of 58 files", "31 de 58 arquivos"));
                 SetProgress(0.54);
-                BuildNote.Text = L("Encore 19 minutes environ. Le PC reste utilisable.", "About 19 minutes left. Your PC stays usable.");
+                BuildNote.Text = L("Encore 19 minutes environ. Le PC reste utilisable.", "About 19 minutes left. Your PC stays usable.", "Faltam cerca de 19 minutos. O seu PC continua utilizável.");
                 break;
             case "update":
                 BeginUpdate(outPath, "v0.7.0");
-                Stage("read"); rows["download"].Small(L("3 Mo, outils inchangés", "3 MB, build tools unchanged"));
+                Stage("read"); rows["download"].Small(L("3 Mo, outils inchangés", "3 MB, build tools unchanged", "3 MB, ferramentas de compilação sem mudança"));
                 Stage("lift");
-                Stage("compile"); rows["compile"].Small(L("7 fichiers changés sur 516", "7 of 516 files changed"));
+                Stage("compile"); rows["compile"].Small(L("7 fichiers changés sur 516", "7 of 516 files changed", "7 de 516 arquivos alterados"));
                 SetProgress(0.62);
-                BuildNote.Text = L("Encore 3 minutes environ. Le jeu actuel reste jouable jusqu'à la fin.", "About 3 minutes left. Your current game stays playable until the end.");
+                BuildNote.Text = L("Encore 3 minutes environ. Le jeu actuel reste jouable jusqu'à la fin.", "About 3 minutes left. Your current game stays playable until the end.", "Faltam cerca de 3 minutos. O seu jogo atual continua jogável até o fim.");
                 break;
             case "ready":
                 MakeRows(update: false);
@@ -353,11 +353,11 @@ public partial class MainWindow : Window
                 MakeRows(update: false);
                 Stage("read"); Stage("lift"); Stage("compile");
                 ShowProblem(L("Des fichiers du compilateur de ReLink ont disparu (clang.exe dans tools\\llvm-mingw\\bin).",
-                              "Files of ReLink's own compiler are missing (clang.exe in tools\\llvm-mingw\\bin)."), tools: true);
+                              "Files of ReLink's own compiler are missing (clang.exe in tools\\llvm-mingw\\bin).", "Faltam arquivos do compilador do próprio ReLink (clang.exe em tools\\llvm-mingw\\bin)."), tools: true);
                 break;
             case "playing":
                 ShowHome();
-                ShowPlaying(L("L'écran est à 60 Hz ; il revient à 100 Hz quand vous quittez le jeu.", "The display is at 60 Hz; it goes back to 100 Hz when you leave the game."));
+                ShowPlaying(L("L'écran est à 60 Hz ; il revient à 100 Hz quand vous quittez le jeu.", "The display is at 60 Hz; it goes back to 100 Hz when you leave the game.", "A tela está a 60 Hz; ela volta para 100 Hz quando você sair do jogo."));
                 break;
             default:
                 ShowHome();

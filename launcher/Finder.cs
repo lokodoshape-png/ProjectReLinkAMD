@@ -19,10 +19,10 @@ static class Finder
         var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
         var places = new List<(string Dir, string Name)>
         {
-            (Path.Combine(home, "Downloads"), L("Téléchargements", "Downloads")),
-            (Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory), L("Bureau", "Desktop")),
+            (Path.Combine(home, "Downloads"), L("Téléchargements", "Downloads", "Downloads")),
+            (Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory), L("Bureau", "Desktop", "Área de Trabalho")),
             (Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "Documents"),
-            (home, L("Dossier personnel", "Home")),
+            (home, L("Dossier personnel", "Home", "Pasta pessoal")),
         };
         foreach (var d in DriveInfo.GetDrives())
         {
@@ -66,10 +66,10 @@ static class Finder
     public static string Ago(DateTime t)
     {
         var d = DateTime.Now - t;
-        if (d.TotalDays < 1 && t.Date == DateTime.Today) return L("modifié aujourd'hui", "modified today");
-        if (d.TotalDays < 2) return L("modifié hier", "modified yesterday");
-        if (d.TotalDays < 14) return L($"il y a {(int)d.TotalDays} jours", $"{(int)d.TotalDays} days ago");
-        if (d.TotalDays < 60) return L($"il y a {(int)(d.TotalDays / 7)} semaines", $"{(int)(d.TotalDays / 7)} weeks ago");
+        if (d.TotalDays < 1 && t.Date == DateTime.Today) return L("modifié aujourd'hui", "modified today", "modificado hoje");
+        if (d.TotalDays < 2) return L("modifié hier", "modified yesterday", "modificado ontem");
+        if (d.TotalDays < 14) return L($"il y a {(int)d.TotalDays} jours", $"{(int)d.TotalDays} days ago", $"{(int)d.TotalDays} dias atrás");
+        if (d.TotalDays < 60) return L($"il y a {(int)(d.TotalDays / 7)} semaines", $"{(int)(d.TotalDays / 7)} weeks ago", $"{(int)(d.TotalDays / 7)} semanas atrás");
         return t.ToString("d MMM yyyy");
     }
 
@@ -104,7 +104,7 @@ static class Finder
                 if (args.Length > 0) sl.SetArguments(args);
                 sl.SetWorkingDirectory(gameFolder);
                 sl.SetIconLocation(File.Exists(self) ? self : target, 0);
-                sl.SetDescription(L("Ocarina of Time sur PC, avec Project ReLink", "Ocarina of Time on PC, with Project ReLink"));
+                sl.SetDescription(L("Ocarina of Time sur PC, avec Project ReLink", "Ocarina of Time on PC, with Project ReLink", "Ocarina of Time no PC, com o Project ReLink"));
                 Directory.CreateDirectory(Path.GetDirectoryName(link)!);
                 ((System.Runtime.InteropServices.ComTypes.IPersistFile)sl).Save(link, true);
             }

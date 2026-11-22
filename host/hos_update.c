@@ -5,6 +5,7 @@
    repository, or before updates came in) is never asked about. RELINK_NO_UPDATE_CHECK=1 (relink_env.txt) turns it off */
 #ifdef _WIN32
 #include "hos_paths.h"
+#include "hos_lang.h"   /* (relink-amd: the boxes in Portuguese) */
 #include <windows.h>
 #include <winhttp.h>
 #include <shellapi.h>
@@ -105,7 +106,23 @@ void hos_update_check(void) {
     const int has_builder = read_value(file, "builder", builder, sizeof builder) &&
                             MultiByteToWideChar(CP_UTF8, 0, builder, -1, wbuilder, MAX_PATH) > 0 &&
                             GetFileAttributesW(wbuilder) != INVALID_FILE_ATTRIBUTES;
-    if (has_builder)
+    const int pt = hos_lang_pt();   /* (relink-amd: in Portuguese when the game is) */
+    if (has_builder && pt)
+        _snwprintf(text, 2048,
+                   L"Saiu uma nova versão do ReLink: %ls (este jogo é a %ls).\n\n"
+                   L"Atualizar agora? O jogo fecha, e o ReLink baixa a nova versão e compila esta pasta do jogo de novo a partir dos "
+                   L"arquivos do jogo que ele guarda. Isso leva mais ou menos o mesmo tempo da sua primeira compilação. Os seus saves e "
+                   L"configurações ficam.\n\n"
+                   L"Sim: atualizar agora\nNão: agora não (pergunta de novo da próxima vez)\nCancelar: pular esta versão",
+                   wtag, whave);
+    else if (pt)
+        _snwprintf(text, 2048,
+                   L"Saiu uma nova versão do ReLink: %ls (este jogo é a %ls).\n\n"
+                   L"O launcher do ReLink que criou esta pasta não foi encontrado, então ele não consegue se atualizar sozinho. Abrir a "
+                   L"página de download?\n\n"
+                   L"Sim: abrir a página\nNão: agora não (pergunta de novo da próxima vez)\nCancelar: pular esta versão",
+                   wtag, whave);
+    else if (has_builder)
         _snwprintf(text, 2048,
                    L"A new version of ReLink is out: %ls (this game is %ls).\n\n"
                    L"Update now? The game closes, and ReLink downloads the new version and builds this game folder again from the "
@@ -118,7 +135,7 @@ void hos_update_check(void) {
                    L"The ReLink launcher that made this folder was not found, so it can't update by itself. Open the download page?\n\n"
                    L"Yes: open the page\nNo: not now (asked again next time)\nCancel: skip this version",
                    wtag, whave);
-    const int answer = MessageBoxW(NULL, text, L"ReLink update", MB_YESNOCANCEL | MB_ICONINFORMATION | MB_TOPMOST | MB_SETFOREGROUND);
+    const int answer = MessageBoxW(NULL, text, pt ? L"Atualização do ReLink" : L"ReLink update", MB_YESNOCANCEL | MB_ICONINFORMATION | MB_TOPMOST | MB_SETFOREGROUND);
     if (answer == IDCANCEL) {
         wchar_t user[MAX_PATH + 16];
         _snwprintf(user, MAX_PATH + 16, L"%ls\\user", dir);
@@ -146,7 +163,8 @@ void hos_update_check(void) {
         fflush(stderr);
         ExitProcess(0);
     }
-    MessageBoxW(NULL, L"ReLink could not be started. The game starts as it is.", L"ReLink update", MB_OK | MB_ICONWARNING | MB_TOPMOST);
+    MessageBoxW(NULL, hos_lang_pt() ? L"Não foi possível abrir o ReLink. O jogo abre como está." : L"ReLink could not be started. The game starts as it is.",
+                hos_lang_pt() ? L"Atualização do ReLink" : L"ReLink update", MB_OK | MB_ICONWARNING | MB_TOPMOST);
 }
 #elif defined(__linux__)
 #include "hos_paths.h"

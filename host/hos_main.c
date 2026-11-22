@@ -1394,12 +1394,18 @@ static int narrow_paths_ok(int argc, char **argv) {
     for (int i = 1; i < argc; i++) quiet |= !strcmp(argv[i], "--prepare-shaders");
     if (!quiet) {
         wchar_t text[MAX_PATH * 2 + 640];
+        /* (relink-amd: in Portuguese on a Windows in Portuguese; the game's language.txt cannot be read from here) */
+        const int pt = PRIMARYLANGID(GetUserDefaultUILanguage()) == LANG_PORTUGUESE;
         _snwprintf(text, sizeof text / sizeof text[0],
-                   L"ReLink can't open its files in this folder:\n\n%ls\n\n"
-                   L"%ls\n\nMove the game folder somewhere with a shorter name of plain letters and digits (for example C:\\Games\\ReLink), "
-                   L"or update Windows.",
-                   w, GetACP() == CP_UTF8 ? L"The path is too long."
-                                          : L"Its name has characters this Windows can only give the game from Windows 10 version 1903 on.");
+                   pt ? L"O ReLink não consegue abrir os arquivos dele nesta pasta:\n\n%ls\n\n"
+                        L"%ls\n\nMova a pasta do jogo para um lugar com um nome mais curto, só com letras e números simples (por exemplo "
+                        L"C:\\Jogos\\ReLink), ou atualize o Windows."
+                      : L"ReLink can't open its files in this folder:\n\n%ls\n\n"
+                        L"%ls\n\nMove the game folder somewhere with a shorter name of plain letters and digits (for example C:\\Games\\ReLink), "
+                        L"or update Windows.",
+                   w, GetACP() == CP_UTF8 ? (pt ? L"O caminho é longo demais." : L"The path is too long.")
+                                          : (pt ? L"O nome tem caracteres que este Windows só consegue passar para o jogo a partir do Windows 10 versão 1903."
+                                                : L"Its name has characters this Windows can only give the game from Windows 10 version 1903 on."));
         text[sizeof text / sizeof text[0] - 1] = 0;
         MessageBoxW(NULL, text, L"Project ReLink", MB_OK | MB_ICONERROR | MB_SETFOREGROUND);
     }

@@ -6,6 +6,7 @@
    hos_romfs_dir and hos_user_dir are set by hos_main.c. Reads are positional (ReadFile with an offset), so any number
    of guest threads can read one file at once. Results: switchbrew "Error codes" (module 2 = fs). */
 #include "hos.h"
+#include "hos_lang.h"   /* (relink-amd: the boxes in Portuguese) */
 #include "prompts.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -65,24 +66,31 @@ static void mount(const char *name, const char *root, int writable) {
             } while (FindNextFileA(f, &other));
             FindClose(f);
         }
-        char text[1024] = "";
+        char text[1600] = "";   /* (relink-amd: room for the Portuguese) */
         if (!found) {
             hos_log("fs: the RomFS has no System\\Resource\\ResourceSizeTable file: the game files are incomplete");
-            snprintf(text, sizeof text, "The game files in %s are not the game's own RomFS: its System\\Resource folder has no "
+            snprintf(text, sizeof text, HOS_T("The game files in %s are not the game's own RomFS: its System\\Resource folder has no "
                      "ResourceSizeTable file, and the game will most likely close at once.\n\nA romfs folder taken from another PC "
                      "port or tool holds the game in its own format and does not work with ReLink. Install again from your own dump "
-                     "of the game (the .nup file, or the romfs and exefs folders dumped from it).", root);
+                     "of the game (the .nup file, or the romfs and exefs folders dumped from it).",
+                     "Os arquivos do jogo em %s não são a RomFS do próprio jogo: a pasta System\\Resource dela não tem o arquivo "
+                     "ResourceSizeTable, e o jogo provavelmente vai fechar na hora.\n\nUma pasta romfs tirada de outro port para PC "
+                     "ou ferramenta guarda o jogo no formato dela e não funciona com o ReLink. Instale de novo a partir do seu próprio "
+                     "dump do jogo (o arquivo .nup, ou as pastas romfs e exefs extraídas dele)."), root);
         } else {
             hos_log("fs: RomFS resource table %s (%lu bytes)", fd.cFileName, (unsigned long)fd.nFileSizeLow);
             if (found == 2) {
                 hos_log("fs: that is not the supported version's (%s): the game files are from another version", expected);
-                snprintf(text, sizeof text, "The game files in %s are from another version of the game (%s; ReLink supports the "
+                snprintf(text, sizeof text, HOS_T("The game files in %s are from another version of the game (%s; ReLink supports the "
                          "one with %s), and the game may close or misbehave.\n\nInstall again from a dump of the game with its "
-                         "update applied, its romfs and exefs from the same dump.", root, fd.cFileName, expected);
+                         "update applied, its romfs and exefs from the same dump.",
+                         "Os arquivos do jogo em %s são de outra versão do jogo (%s; o ReLink suporta a que tem %s), e o jogo pode "
+                         "fechar ou funcionar mal.\n\nInstale de novo a partir de um dump do jogo com a atualização aplicada, com a "
+                         "romfs e a exefs do mesmo dump."), root, fd.cFileName, expected);
             }
         }
         if (text[0] && !getenv("HOS_HEADLESS"))
-            MessageBoxA(NULL, text, "Project ReLink: game files", MB_OK | MB_ICONWARNING | MB_SETFOREGROUND);
+            hos_box(text, HOS_T("Project ReLink: game files", "Project ReLink: arquivos do jogo"), MB_OK | MB_ICONWARNING | MB_SETFOREGROUND);
     }
 #endif
 }

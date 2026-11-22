@@ -2,11 +2,16 @@ using System.Globalization;
 
 namespace ReLink;
 
-/// The launcher's words: English unless the player chose French (the Game page's "Launcher language", kept in launcher.ini;
-/// RELINK_LANG=fr or en chooses for one run, for tests). And the names and addresses the project goes by.
+/// The launcher's words: English, French or (relink-amd, 0.7.9.6) Brazilian Portuguese, as the player chose (the Game page's
+/// "Launcher language", kept in launcher.ini; RELINK_LANG=fr, pt or en chooses for one run, for tests). Without a choice yet,
+/// Portuguese on a Windows in Portuguese, else English. And the names and addresses the project goes by.
 static class Texts
 {
-    public static readonly bool French = Chosen().StartsWith("fr", StringComparison.OrdinalIgnoreCase);
+    static readonly string Language = Chosen();
+    public static readonly bool French = Language.StartsWith("fr", StringComparison.OrdinalIgnoreCase);
+    public static readonly bool Portuguese = Language.StartsWith("pt", StringComparison.OrdinalIgnoreCase);
+    /// The language's code as launcher.ini keeps it: "en", "fr" or "pt"
+    public static string Code => French ? "fr" : Portuguese ? "pt" : "en";
 
     /// The language this run speaks: it is read once, so a change shows the next time the launcher opens
     static string Chosen()
@@ -18,10 +23,11 @@ static class Texts
                 if (line.StartsWith("ui_language=")) return line[12..].Trim();
         }
         catch (Exception) { }
-        return "en";
+        return CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "pt" ? "pt" : "en";
     }
 
-    public static string L(string fr, string en) => French ? fr : en;
+    /// The words in the launcher's language: French, English or Portuguese (English where no Portuguese is given)
+    public static string L(string fr, string en, string? pt = null) => French ? fr : Portuguese && pt != null ? pt : en;
 
     public const string Name = "Project ReLink";
     public const string Repo = "lokodoshape-png/ProjectReLinkAMD";
@@ -56,10 +62,10 @@ static class Texts
     }
 
     public static string Bytes(long bytes) =>
-        bytes >= 1L << 30 ? $"{bytes / (double)(1L << 30):0.0} {L("Go", "GB")}" : $"{bytes >> 20} {L("Mo", "MB")}";
+        bytes >= 1L << 30 ? $"{bytes / (double)(1L << 30):0.0} {L("Go", "GB", "GB")}" : $"{bytes >> 20} {L("Mo", "MB", "MB")}";
 
     public static string Lasted(TimeSpan t) =>
         t.TotalHours >= 1 ? $"{(int)t.TotalHours} h {t.Minutes} min"
-        : t.TotalMinutes >= 1 ? $"{(int)t.TotalMinutes} {L("minutes", "minutes")}"
-        : $"{t.Seconds} {L("secondes", "seconds")}";
+        : t.TotalMinutes >= 1 ? $"{(int)t.TotalMinutes} {L("minutes", "minutes", "minutos")}"
+        : $"{t.Seconds} {L("secondes", "seconds", "segundos")}";
 }

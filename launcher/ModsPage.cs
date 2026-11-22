@@ -67,14 +67,14 @@ public partial class MainWindow
         var problems = s.Folder != "" ? PatchProblems(s.Folder).Count : 0;
         var names = mods.Where(m => m.On && !m.Repair).Select(m => m.Name).Take(2).ToList();
         ModsSub.Text = names.Count > 0 ? string.Join(", ", names) + (on > 2 ? "…" : "")
-                     : L("Textures, modèles, sons, patchs de code", "Textures, models, sounds, code patches");
-        ModsCardText.Text = on == 0 ? L("Aucun mod actif", "No mods on")
-                          : on == 1 ? L("1 mod actif", "1 mod on") : L($"{on} mods actifs", $"{on} mods on");
-        if (modsToBuild) ModsCardText.Text += L(" · à reconstruire", " · to build");
-        else if (problems > 0) ModsCardText.Text += L($" · {problems} sans effet", $" · {problems} without effect");
+                     : L("Textures, modèles, sons, patchs de code", "Textures, models, sounds, code patches", "Texturas, modelos, sons, patches de código");
+        ModsCardText.Text = on == 0 ? L("Aucun mod actif", "No mods on", "Nenhum mod ligado")
+                          : on == 1 ? L("1 mod actif", "1 mod on", "1 mod ligado") : L($"{on} mods actifs", $"{on} mods on", $"{on} mods ligados");
+        if (modsToBuild) ModsCardText.Text += L(" · à reconstruire", " · to build", " · a compilar");
+        else if (problems > 0) ModsCardText.Text += L($" · {problems} sans effet", $" · {problems} without effect", $" · {problems} sem efeito");
         // (the version is the side's card: here, only where to read what changed)
-        NewsText.Text = L("Notes de version", "Release notes");
-        NewsSub.Text = L("Ce qui a changé, sur GitHub", "What changed, on GitHub");
+        NewsText.Text = L("Notes de version", "Release notes", "Notas da versão");
+        NewsSub.Text = L("Ce qui a changé, sur GitHub", "What changed, on GitHub", "O que mudou, no GitHub");
     }
 
     void ModsCardClick(object sender, MouseButtonEventArgs e) { e.Handled = true; NavMods.IsChecked = true; }
@@ -109,15 +109,15 @@ public partial class MainWindow
             ModsList.Children.Add(new TextBlock
             {
                 Text = L("Aucun mod. Mettez un mod dans le dossier mods du jeu : mods\\<nom>\\romfs pour les textures, modèles et sons, mods\\<nom>\\exefs pour les patchs de code.",
-                         "No mods yet. Put one in the game folder's mods: mods\\<name>\\romfs for textures, models and sounds, mods\\<name>\\exefs for code patches."),
+                         "No mods yet. Put one in the game folder's mods: mods\\<name>\\romfs for textures, models and sounds, mods\\<name>\\exefs for code patches.", "Ainda não há mods. Coloque um na pasta mods do jogo: mods\\<nome>\\romfs para texturas, modelos e sons, mods\\<nome>\\exefs para patches de código."),
                 Style = St("Body"), Margin = new Thickness(2, 6, 0, 0),
             });
         foreach (var m in mods)
         {
             var kind = string.Join(" + ", new[] { m.RomFs ? "romfs" : null, m.ExeFs ? "exefs" : null }.Where(k => k != null));
-            var hint = m.Repair ? L("Réparation automatique de votre dump, faite à chaque installation.", "The automatic repair of your dump, made at every install.")
-                     : m.ExeFs ? L("Patchs de code : compte après une reconstruction du jeu.", "Code patches: count once the game is built again.")
-                     : L("Compte dès le prochain lancement.", "Counts from the next start.");
+            var hint = m.Repair ? L("Réparation automatique de votre dump, faite à chaque installation.", "The automatic repair of your dump, made at every install.", "O reparo automático do seu dump, feito em toda instalação.")
+                     : m.ExeFs ? L("Patchs de code : compte après une reconstruction du jeu.", "Code patches: count once the game is built again.", "Patches de código: valem quando o jogo for compilado de novo.")
+                     : L("Compte dès le prochain lancement.", "Counts from the next start.", "Vale a partir da próxima abertura.");
             var sw = new CheckBox { Style = St("Switch"), IsChecked = m.On, VerticalAlignment = VerticalAlignment.Center, IsEnabled = !preview && game == null && runner == null };
             var entry = m;
             sw.Click += (_, _) => ToggleMod(entry, sw);
@@ -139,7 +139,7 @@ public partial class MainWindow
                                : s.Folder != "" ? PatchProblems(s.Folder) : new List<string>();
         if (problems.Count > 0)
         {
-            ModsList.Children.Add(new TextBlock { Text = L("Patchs de code sans effet à la dernière construction", "Code patches without effect at the last build"), Style = St("Section") });
+            ModsList.Children.Add(new TextBlock { Text = L("Patchs de code sans effet à la dernière construction", "Code patches without effect at the last build", "Patches de código sem efeito na última compilação"), Style = St("Section") });
             foreach (var p in problems.Take(8))
                 ModsList.Children.Add(new TextBlock { Text = p, Style = St("RowHint"), TextWrapping = TextWrapping.Wrap, Margin = new Thickness(2, 2, 0, 2) });
         }
@@ -155,13 +155,13 @@ public partial class MainWindow
         var target = Path.Combine(dir, sw.IsChecked == true ? m.Name : "-" + m.Name);
         try
         {
-            if (Directory.Exists(target)) throw new IOException(L("un dossier de ce nom existe déjà", "a folder with that name exists already"));
+            if (Directory.Exists(target)) throw new IOException(L("un dossier de ce nom existe déjà", "a folder with that name exists already", "já existe uma pasta com esse nome"));
             Directory.Move(m.Path, target);
         }
         catch (Exception ex)
         {
             sw.IsChecked = m.On;
-            MainNote.Text = L("Mod non changé : ", "Mod not changed: ") + ex.Message;
+            MainNote.Text = L("Mod non changé : ", "Mod not changed: ", "Mod não alterado: ") + ex.Message;
             return;
         }
         ShowModsPage();
